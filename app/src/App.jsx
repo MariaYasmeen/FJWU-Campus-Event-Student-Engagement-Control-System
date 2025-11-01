@@ -17,6 +17,11 @@ import StudentCommunity from "./pages/StudentCommunity.jsx";
 import StudentProfile from "./pages/StudentProfile.jsx";
 import StudentSettings from "./pages/StudentSettings.jsx";
 import StudentSearch from "./pages/StudentSearch.jsx";
+import SocietyProfile from "./pages/SocietyProfile.jsx";
+import YourEvents from "./pages/YourEvents.jsx";
+import ManagerAnalytics from "./pages/ManagerAnalytics.jsx";
+import ManagerSettings from "./pages/ManagerSettings.jsx";
+import ManagerAnnouncements from "./pages/ManagerAnnouncements.jsx";
 
 // ✅ Fix: RootRedirect must be placed inside AuthProvider
 function RootRedirectWrapper() {
@@ -148,10 +153,50 @@ export default function App() {
             }
           />
           <Route
+            path="/manager/your-events"
+            element={
+              <ProtectedRoute>
+                <YourEvents />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/analytics"
+            element={
+              <ProtectedRoute>
+                <ManagerAnalytics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/settings"
+            element={
+              <ProtectedRoute>
+                <ManagerSettings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/announcements"
+            element={
+              <ProtectedRoute>
+                <ManagerAnnouncements />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/events/:id"
             element={
               <ProtectedRoute>
                 <EventDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/society/:uid"
+            element={
+              <ProtectedRoute>
+                <SocietyProfile />
               </ProtectedRoute>
             }
           />

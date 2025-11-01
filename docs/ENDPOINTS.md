@@ -18,6 +18,14 @@
 - `/events/:id`: Event detail: description, venue, time, RSVP, comments, share.
  - `/manager/favourites`: Manager saved posts.
 
+New/Updated
+- `/society/:uid`: Society Profile page; circular logo, name, description, and grid/list of that society’s events.
+- `/manager/your-events`: Manager list/table view of created events.
+- `/manager/analytics`: Manager analytics placeholder.
+- `/manager/settings`: Manager settings placeholder.
+- `/manager/announcements`: Manager announcements placeholder; fixed announcements rail remains visible on layout.
+
 Notes
 - All student and manager routes are protected (auth required).
-- Student and Manager dashboards share a fixed Navbar and Left Sidebar; only the central content scrolls.
+- Student and Manager dashboards share a fixed Navbar, Left Sidebar, and a fixed Announcements rail on the right; only the central content scrolls.
+- Sidebar buttons now use router links and navigate correctly across student/manager panels (placeholders exist where content is pending).

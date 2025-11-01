@@ -3,9 +3,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { db } from '../firebase';
 import { doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
-import { uploadFile } from '../utils/storage';
-import Navbar from '../components/Navbar.jsx';
-import Sidebar from '../components/Sidebar.jsx';
+import ManagerLayout from '../components/ManagerLayout.jsx';
 
 export default function ManagerProfile() {
   const { user, profile } = useAuth();
@@ -39,16 +37,11 @@ export default function ManagerProfile() {
     setLoading(true);
     setError(null);
     try {
-      let finalLogo = logoUrl;
-      if (logoFile) {
-        const { url } = await uploadFile({ file: logoFile, pathPrefix: 'society_logos', uid: user.uid });
-        finalLogo = url;
-      }
       await updateDoc(doc(db, 'users', user.uid), {
         societyName,
         organizerName: societyName,
         description,
-        logo: finalLogo,
+        logo: logoUrl || null,
         contactEmail: email,
         phone,
         category,
@@ -66,70 +59,68 @@ export default function ManagerProfile() {
   };
 
   return (
-    <div className="min-h-screen">
-      <Navbar />
-      <Sidebar role="manager" managerProfileComplete={!!profile?.profileComplete} current={'manager_profile'} onChange={() => {}} />
-      <main className="p-6 pt-14 pl-64">
-      <div className="w-full max-w-3xl mx-auto border border-gray-200 p-6 rounded-none shadow-none">
-        <h1 className="text-xl font-semibold text-fjwuGreen mb-1">Society / Club Profile</h1>
-        <div className="text-sm text-gray-600 mb-4">{existing ? 'Update your society information' : 'Create your society profile to unlock event management features.'}</div>
-        {existing && (
-          <div className="border border-gray-200 p-4 mb-4 rounded-none shadow-none">
-            <h2 className="text-lg font-semibold">Current Profile</h2>
-            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              <div><span className="font-medium">Society Name:</span> {societyName || profile?.organizerName}</div>
-              <div><span className="font-medium">Category:</span> {category || profile?.category}</div>
-              <div className="md:col-span-2"><span className="font-medium">Description:</span> {description || profile?.description || profile?.bio}</div>
-              <div><span className="font-medium">Email:</span> {email || profile?.contactEmail || profile?.email}</div>
-              <div><span className="font-medium">Phone:</span> {phone || profile?.phone || '-'}</div>
-              <div><span className="font-medium">Founded Year:</span> {foundedYear || profile?.foundedYear || '-'}</div>
-            </div>
-            {logoUrl && (
-              <div className="mt-3">
-                <img src={logoUrl} alt="Logo" className="h-16 border border-gray-200" />
+    <ManagerLayout current={'manager_profile'} onChange={() => {}}>
+      <div className="min-h-[calc(100vh-64px)] w-full bg-gray-50">
+        <div className="mx-auto max-w-3xl px-4 py-8">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
+            <div className="px-6 pt-8 pb-4 text-center bg-fjwuGreen/5 rounded-t-2xl">
+              <div className="mx-auto w-28 h-28 rounded-full ring-4 ring-white shadow-sm overflow-hidden flex items-center justify-center bg-gray-100">
+                {logoUrl ? (
+                  <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-4xl">🏛️</span>
+                )}
               </div>
-            )}
+              <div className="mt-4 space-y-1">
+                <div className="text-2xl font-semibold text-fjwuGreen">{societyName || 'Your Society Name'}</div>
+                <div className="text-sm text-gray-700">{category || 'Category'}</div>
+                <div className="text-sm text-gray-700">{email || user?.email || ''}</div>
+                <div className="text-sm">{description || 'Your description or tagline'}</div>
+              </div>
+            </div>
+
+            <div className="px-6 py-6">
+              <h2 className="text-lg font-semibold mb-3">Edit Profile</h2>
+              {error && <div className="text-sm text-red-600 mb-2">{error}</div>}
+              <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <label className="block md:col-span-2">
+                  <span className="text-sm">Logo URL</span>
+                  <input className="input mt-1" placeholder="https://..." value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} />
+                </label>
+                <label className="block">
+                  <span className="text-sm">Society Name</span>
+                  <input className="input mt-1" value={societyName} onChange={(e) => setSocietyName(e.target.value)} required />
+                </label>
+                <label className="block">
+                  <span className="text-sm">Category</span>
+                  <select className="input mt-1" value={category} onChange={(e) => setCategory(e.target.value)}>
+                    {['Cultural','Technical','Literary','Sports','Other'].map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </label>
+                <label className="block md:col-span-2">
+                  <span className="text-sm">Description / Mission</span>
+                  <textarea className="input mt-1" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
+                </label>
+                <label className="block">
+                  <span className="text-sm">Official Email</span>
+                  <input type="email" className="input mt-1" value={email} onChange={(e) => setEmail(e.target.value)} />
+                </label>
+                <label className="block">
+                  <span className="text-sm">Phone (optional)</span>
+                  <input className="input mt-1" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                </label>
+                <label className="block">
+                  <span className="text-sm">Founded Year (optional)</span>
+                  <input type="number" className="input mt-1" value={foundedYear} onChange={(e) => setFoundedYear(e.target.value)} />
+                </label>
+                <div className="md:col-span-2">
+                  <button className="btn btn-primary" disabled={loading}>{loading ? 'Saving...' : 'Save Profile'}</button>
+                </div>
+              </form>
+            </div>
           </div>
-        )}
-        {error && <div className="text-sm text-red-600 mb-2">{error}</div>}
-        <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <label className="block">
-            <span className="text-sm">Society Name</span>
-            <input className="input mt-1" value={societyName} onChange={(e) => setSocietyName(e.target.value)} required />
-          </label>
-          <label className="block">
-            <span className="text-sm">Category</span>
-            <select className="input mt-1" value={category} onChange={(e) => setCategory(e.target.value)}>
-              {['Cultural','Technical','Literary','Sports','Other'].map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </label>
-          <label className="block md:col-span-2">
-            <span className="text-sm">Description / Mission</span>
-            <textarea className="input mt-1" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
-          </label>
-          <label className="block">
-            <span className="text-sm">Official Email</span>
-            <input type="email" className="input mt-1" value={email} onChange={(e) => setEmail(e.target.value)} />
-          </label>
-          <label className="block">
-            <span className="text-sm">Phone (optional)</span>
-            <input className="input mt-1" value={phone} onChange={(e) => setPhone(e.target.value)} />
-          </label>
-          <label className="block">
-            <span className="text-sm">Founded Year (optional)</span>
-            <input type="number" className="input mt-1" value={foundedYear} onChange={(e) => setFoundedYear(e.target.value)} />
-          </label>
-          <label className="block md:col-span-2">
-            <span className="text-sm">Logo</span>
-            <input type="file" accept="image/*" className="input mt-1" onChange={(e) => setLogoFile(e.target.files?.[0] || null)} />
-            {logoUrl && <img src={logoUrl} alt="Logo" className="mt-3 h-16 rounded" />}
-          </label>
-          <div className="md:col-span-2">
-            <button className="btn btn-primary" disabled={loading}>{loading ? 'Saving...' : 'Save Profile'}</button>
-          </div>
-        </form>
+        </div>
       </div>
-      </main>
-    </div>
+    </ManagerLayout>
   );
 }

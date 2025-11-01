@@ -14,6 +14,9 @@ export default function EventCard({ event }) {
   const [showShare, setShowShare] = useState(false);
   const [registering, setRegistering] = useState(false);
   const [toast, setToast] = useState('');
+  const [organizerLogo, setOrganizerLogo] = useState('');
+  const organizerId = event.organizerId || event.createdBy || null;
+  const organizerName = event.organizerName || '';
 
   useEffect(() => {
     const loadCounts = async () => {
@@ -34,6 +37,20 @@ export default function EventCard({ event }) {
     };
     if (user) loadCounts();
   }, [user, event.id, event.likesCount]);
+
+  useEffect(() => {
+    const loadOrganizer = async () => {
+      if (!organizerId) return;
+      try {
+        const snap = await getDoc(doc(db, 'users', organizerId));
+        if (snap.exists()) {
+          const data = snap.data();
+          setOrganizerLogo(data.logo || data.photoURL || '');
+        }
+      } catch {}
+    };
+    loadOrganizer();
+  }, [organizerId]);
 
   const toggleLike = async (e) => {
     e?.stopPropagation?.();
@@ -113,11 +130,40 @@ export default function EventCard({ event }) {
       ? new Date(event.eventDate.seconds * 1000).toLocaleString()
       : (event.eventDate ? new Date(event.eventDate).toLocaleString() : ''));
 
+  const createdMs = (event.createdAt?.seconds ? event.createdAt.seconds * 1000 : (event.createdAt ? Date.parse(event.createdAt) : null))
+    || (event.dateTime ? Date.parse(event.dateTime) : null)
+    || (event.eventDate?.seconds ? event.eventDate.seconds * 1000 : (event.eventDate ? Date.parse(event.eventDate) : null));
+  const postedAgo = (() => {
+    if (!createdMs) return '';
+    const diff = Date.now() - createdMs;
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+    const days = Math.floor(hours / 24);
+    return `${days} day${days !== 1 ? 's' : ''} ago`;
+  })();
+
   return (
     <article
       className="max-w-md mx-auto border border-gray-200 bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition"
       onClick={() => navigate(`/events/${event.id}`)}
     >
+      {/* Organizer header (top-right) */}
+      {(organizerId || organizerName) && (
+        <div className="px-4 pt-3">
+          <div className="flex items-center justify-end gap-2" onClick={(e) => { e.stopPropagation(); if (organizerId) navigate(`/society/${organizerId}`); }}>
+            {organizerLogo ? (
+              <img src={organizerLogo} alt="Logo" className="w-6 h-6 rounded-full border border-gray-200" />
+            ) : (
+              <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs">🏛️</div>
+            )}
+            <button className="text-sm text-fjwuGreen hover:underline" onClick={(e) => { e.stopPropagation(); if (organizerId) navigate(`/society/${organizerId}`); }}>
+              {organizerName || 'Society'}
+            </button>
+          </div>
+        </div>
+      )}
       {event.posterURL && (
         <img src={event.posterURL} alt="Poster" className="w-full object-cover" />
       )}
@@ -159,6 +205,7 @@ export default function EventCard({ event }) {
           <h3 className="text-base font-semibold text-fjwuGreen">{event.title}</h3>
           <p className="text-sm text-gray-700 mt-1">{event.description?.slice(0, 160)}{event.description?.length > 160 ? '…' : ''}</p>
           <div className="text-xs text-gray-500 mt-1">{dateStr}</div>
+          {postedAgo && <div className="text-xs text-gray-500 mt-1">{postedAgo}</div>}
         </div>
         {toast && <div className="mt-2 text-sm text-green-700">{toast}</div>}
       </div>

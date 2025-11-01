@@ -17,7 +17,7 @@ export default function Navbar({ onSearch }) {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 w-full border-b border-gray-200 bg-white">
       <div className="mx-auto max-w-6xl px-4 h-14 flex items-center gap-4">
-        <Link to="/" className="text-fjwuGreen font-semibold">airelpier</Link>
+        <Link to="/" className="text-fjwuGreen font-semibold">FJWU Event Hub</Link>
         <div className="flex-1">
           <input
             className="input"

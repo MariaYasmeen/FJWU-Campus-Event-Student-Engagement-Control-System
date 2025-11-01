@@ -1,5 +1,6 @@
 import Navbar from './Navbar.jsx';
 import LeftSidebar from './LeftSidebar.jsx';
+import AnnouncementsPanel from './AnnouncementsPanel.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export default function ManagerLayout({ children, current = 'all', onChange }) {
@@ -14,7 +15,8 @@ export default function ManagerLayout({ children, current = 'all', onChange }) {
         current={current}
         onChange={onChange}
       />
-      <main className="pt-14 pl-64 h-screen overflow-y-auto p-6">{children}</main>
+      <AnnouncementsPanel />
+      <main className="pt-14 pl-64 pr-80 h-screen overflow-y-auto p-6">{children}</main>
     </div>
   );
 }
