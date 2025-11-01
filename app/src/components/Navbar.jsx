@@ -30,7 +30,7 @@ export default function Navbar({ onSearch }) {
         <div className="flex items-center gap-3">
           {/* Icons simplified as letters for minimal build */}
           <button className="btn btn-secondary" title="Notifications">🔔</button>
-          <button className="btn btn-secondary" title="Bookmarks" onClick={() => navigate(profile?.role === 'manager' ? '/manager/favourites' : '/student')}>🔖</button>
+          <button className="btn btn-secondary" title="Bookmarks" onClick={() => navigate(profile?.role === 'manager' ? '/manager/favourites' : '/student/favourites')}>🔖</button>
           {profile?.role === 'manager' && (
             <button className="btn btn-primary" title="Create Event" onClick={() => navigate('/manager/create-event')}>＋</button>
           )}

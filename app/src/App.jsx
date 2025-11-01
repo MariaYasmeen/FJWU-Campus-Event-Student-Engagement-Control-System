@@ -10,6 +10,12 @@ import CreateEvent from "./pages/CreateEvent.jsx";
 import EventDetail from "./pages/EventDetail.jsx";
 import ManagerProfile from "./pages/ManagerProfile.jsx";
 import Favourites from "./pages/Favourites.jsx";
+import StudentEvents from "./pages/StudentEvents.jsx";
+import StudentFavourites from "./pages/StudentFavourites.jsx";
+import StudentRegistrations from "./pages/StudentRegistrations.jsx";
+import StudentCommunity from "./pages/StudentCommunity.jsx";
+import StudentProfile from "./pages/StudentProfile.jsx";
+import StudentSettings from "./pages/StudentSettings.jsx";
 
 // ✅ Fix: RootRedirect must be placed inside AuthProvider
 function RootRedirectWrapper() {
@@ -49,6 +55,54 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <StudentHome />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/events"
+            element={
+              <ProtectedRoute>
+                <StudentEvents />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/favourites"
+            element={
+              <ProtectedRoute>
+                <StudentFavourites />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/registrations"
+            element={
+              <ProtectedRoute>
+                <StudentRegistrations />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/community"
+            element={
+              <ProtectedRoute>
+                <StudentCommunity />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/profile"
+            element={
+              <ProtectedRoute>
+                <StudentProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/settings"
+            element={
+              <ProtectedRoute>
+                <StudentSettings />
               </ProtectedRoute>
             }
           />

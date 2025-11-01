@@ -36,7 +36,13 @@ service cloud.firestore {
       }
     }
 
-    match /users/{uid}/favorites/{eventId} {
+    // Saved posts (favourites) indexed under top-level `favourites/{uid}/savedPosts/{eventId}`
+    match /favourites/{uid}/savedPosts/{eventId} {
+      allow read, write: if isVerified() && request.auth.uid == uid;
+    }
+
+    // Student registrations index: `registrations/{uid}/events/{eventId}`
+    match /registrations/{uid}/events/{eventId} {
       allow read, write: if isVerified() && request.auth.uid == uid;
     }
   }

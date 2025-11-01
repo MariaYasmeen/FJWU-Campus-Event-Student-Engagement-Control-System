@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { db } from '../firebase';
-import { doc, getDoc, addDoc, collection, serverTimestamp, updateDoc, increment, getDocs, orderBy, query } from 'firebase/firestore';
+import { doc, getDoc, addDoc, collection, serverTimestamp, updateDoc, increment, getDocs, orderBy, query, setDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext.jsx';
 import ManagerLayout from '../components/ManagerLayout.jsx';
 
@@ -83,6 +83,19 @@ export default function EventDetail() {
       });
       await updateDoc(doc(db, 'events', id), {
         attendeesCount: increment(1),
+      });
+      // Index in user's registrations for student panel
+      await setDoc(doc(db, 'registrations', user.uid, 'events', id), {
+        eventId: id,
+        eventTitle: event?.title || '',
+        eventImage: event?.posterURL || null,
+        venue: event?.venue || null,
+        campus: event?.campus || null,
+        dateTime: event?.dateTime || (event?.eventDate?.seconds ? new Date(event.eventDate.seconds*1000).toISOString() : (event?.eventDate || null)),
+        startTime: event?.startTime || null,
+        endTime: event?.endTime || null,
+        organizerName: event?.organizerName || null,
+        createdAt: serverTimestamp(),
       });
       alert('RSVP confirmed!');
     } catch (e) {

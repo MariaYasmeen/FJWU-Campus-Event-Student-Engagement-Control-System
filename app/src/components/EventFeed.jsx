@@ -31,6 +31,15 @@ export default function EventFeed({ filter = 'all', search = '' }) {
         // optionally, could fetch favorites subcollection; keeping simple for initial build
       } else if (filter === 'societies') {
         // placeholder for societies listing
+      } else if (filter === 'student_all') {
+        const now = Date.now();
+        rows = rows.filter((e) => {
+          const dateMs = e.eventDate?.seconds ? e.eventDate.seconds * 1000 : (e.dateTime ? Date.parse(e.dateTime) : Date.parse(e.startDate || 0));
+          const upcoming = dateMs ? dateMs >= now : true;
+          const statusOk = (e.status || 'Published').toLowerCase() === 'published';
+          const approvalOk = (e.approvalStatus || 'approved') !== 'rejected';
+          return upcoming && statusOk && approvalOk;
+        });
       }
       setEvents(rows);
       setLoading(false);

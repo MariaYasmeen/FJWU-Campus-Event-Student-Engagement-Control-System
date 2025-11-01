@@ -1,20 +1,24 @@
 import { useState } from 'react';
-import Navbar from '../components/Navbar.jsx';
-import Sidebar from '../components/Sidebar.jsx';
 import EventFeed from '../components/EventFeed.jsx';
+import StudentLayout from '../components/StudentLayout.jsx';
 
 export default function StudentHome() {
-  const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar onSearch={setSearch} />
-      <div className="flex flex-1">
-        <Sidebar current={filter} onChange={setFilter} />
-        <main className="flex-1 p-6">
-          <EventFeed filter={filter} search={search} />
-        </main>
+    <StudentLayout>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2">
+          <h2 className="text-lg font-semibold mb-2">Upcoming Events</h2>
+          <EventFeed filter={'student_all'} search={search} />
+        </div>
+        <div className="card p-4">
+          <h3 className="text-lg font-semibold">Announcements</h3>
+          <ul className="mt-2 text-sm text-gray-700 space-y-1">
+            <li>No announcements yet.</li>
+          </ul>
+          <div className="mt-3 text-sm text-gray-500">(Coming soon)</div>
+        </div>
       </div>
-    </div>
+    </StudentLayout>
   );
 }

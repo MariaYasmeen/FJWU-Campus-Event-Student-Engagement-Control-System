@@ -37,9 +37,11 @@ export default function Sidebar({ current, onChange, role = 'student', managerPr
           ))}
         </ul>
       </div>
-      <div className="p-4 text-xs text-gray-500">
-        <Link to="/manager/create-event" className="underline">Create Event</Link> (managers)
-      </div>
+      {role === 'manager' && (
+        <div className="p-4 text-xs text-gray-500">
+          <Link to="/manager/create-event" className="underline">Create Event</Link> (managers)
+        </div>
+      )}
     </aside>
   );
 }

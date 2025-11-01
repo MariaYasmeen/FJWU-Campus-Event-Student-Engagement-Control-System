@@ -76,3 +76,31 @@ Example document in `events`:
 Notes
 - Keep existing collections (e.g., `users`, `events/*/comments`, `events/*/likes`, `events/*/attendees`) unchanged.
 - Collections are created automatically on first document write.
+
+## New Collections
+
+- Collection `favourites/{uid}/savedPosts/{eventId}`
+  - `eventId`: string
+  - `eventTitle`: string
+  - `eventImage`: string | null
+  - `venue`: string | null
+  - `campus`: string | null
+  - `dateTime`: string | null (ISO)
+  - `startTime`: string | null
+  - `endTime`: string | null
+  - `organizerName`: string | null
+  - `createdAt`: Firestore Timestamp
+
+- Collection `registrations/{uid}/events/{eventId}`
+  - `eventId`: string
+  - `eventTitle`: string
+  - `eventImage`: string | null
+  - `venue`: string | null
+  - `campus`: string | null
+  - `dateTime`: string | null (ISO)
+  - `startTime`: string | null
+  - `endTime`: string | null
+  - `organizerName`: string | null
+  - `createdAt`: Firestore Timestamp
+
+Note: These indexes enable fast retrieval for Student and Manager favourites and Student registrations pages; originals remain in `events/*/attendees` etc.
