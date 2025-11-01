@@ -60,9 +60,10 @@ export default function ManagerHome() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen">
       <Navbar onSearch={setSearch} />
-      <div className="flex items-center justify-between px-6 pt-3">
+      <Sidebar role="manager" managerProfileComplete={!!profile?.profileComplete} current={filter} onChange={handleSidebarChange} />
+      <div className="flex items-center justify-between px-6 pt-14 pl-64">
         {!profile?.profileComplete ? (
           <button className="btn btn-primary" onClick={() => navigate('/manager/profile')}>Start Creating Your Society Profile</button>
         ) : (
@@ -82,9 +83,7 @@ export default function ManagerHome() {
           )}
         </div>
       </div>
-      <div className="flex flex-1">
-        <Sidebar role="manager" managerProfileComplete={!!profile?.profileComplete} current={filter} onChange={handleSidebarChange} />
-        <main className="flex-1 p-6">
+      <main className="p-6 pl-64">
           {/* Dashboard Overview */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="card p-4">
@@ -133,8 +132,7 @@ export default function ManagerHome() {
             <h3 className="text-lg font-semibold mb-3">Your Events</h3>
             <EventFeed filter={'manager_events'} search={search} />
           </div>
-        </main>
-      </div>
+      </main>
     </div>
   );
 }

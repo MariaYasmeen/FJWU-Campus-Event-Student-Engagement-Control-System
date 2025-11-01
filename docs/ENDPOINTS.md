@@ -20,5 +20,4 @@
 
 Notes
 - All student and manager routes are protected (auth required).
-- Student pages share a default Navbar and Student Sidebar.
-- Manager pages share a default Navbar and Manager Sidebar.
+- Student and Manager dashboards share a fixed Navbar and Left Sidebar; only the central content scrolls.

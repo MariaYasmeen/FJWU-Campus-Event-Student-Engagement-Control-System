@@ -35,7 +35,8 @@ export default function EventCard({ event }) {
     if (user) loadCounts();
   }, [user, event.id, event.likesCount]);
 
-  const toggleLike = async () => {
+  const toggleLike = async (e) => {
+    e?.stopPropagation?.();
     const likeRef = doc(db, 'events', event.id, 'likes', user.uid);
     const snap = await getDoc(likeRef);
     if (snap.exists()) {
@@ -51,7 +52,8 @@ export default function EventCard({ event }) {
     }
   };
 
-  const toggleSave = async () => {
+  const toggleSave = async (e) => {
+    e?.stopPropagation?.();
     const favRef = doc(db, 'favourites', user.uid, 'savedPosts', event.id);
     const snap = await getDoc(favRef);
     if (snap.exists()) {
@@ -112,26 +114,29 @@ export default function EventCard({ event }) {
       : (event.eventDate ? new Date(event.eventDate).toLocaleString() : ''));
 
   return (
-    <article className="max-w-md mx-auto border border-gray-200 bg-white rounded-lg shadow-sm overflow-hidden">
+    <article
+      className="max-w-md mx-auto border border-gray-200 bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition"
+      onClick={() => navigate(`/events/${event.id}`)}
+    >
       {event.posterURL && (
         <img src={event.posterURL} alt="Poster" className="w-full object-cover" />
       )}
       {/* Interaction bar below image */}
       <div className="px-4 pt-3">
-        <div className="flex items-center gap-4 text-sm">
-          <button className={`flex items-center gap-1 hover:text-fjwuGreen ${liked ? 'text-fjwuGreen' : 'text-gray-700'}`} onClick={toggleLike} title="Like">
+        <div className="flex items-center justify-around text-sm w-full">
+          <button className={`flex items-center gap-1 hover:text-fjwuGreen ${liked ? 'text-fjwuGreen' : 'text-gray-700'}`} onClick={(e) => toggleLike(e)} title="Like">
             <Heart className={`w-4 h-4 ${liked ? 'fill-fjwuGreen text-fjwuGreen' : ''}`} />
             <span>{likesCount}</span>
           </button>
-          <button className="text-gray-700 hover:text-fjwuGreen" title="Comment" onClick={() => navigate(`/events/${event.id}`)}>
+          <button className="text-gray-700 hover:text-fjwuGreen" title="Comment" onClick={(e) => { e.stopPropagation(); navigate(`/events/${event.id}`); }}>
             <MessageCircle className="w-4 h-4" />
           </button>
           <div className="relative">
-            <button className="text-gray-700 hover:text-fjwuGreen" title="Share" onClick={() => setShowShare((s) => !s)}>
+            <button className="text-gray-700 hover:text-fjwuGreen" title="Share" onClick={(e) => { e.stopPropagation(); setShowShare((s) => !s); }}>
               <Share2 className="w-4 h-4" />
             </button>
             {showShare && (
-              <div className="absolute z-10 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg">
+              <div className="absolute z-10 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg" onClick={(e) => e.stopPropagation()}>
                 <button
                   className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
                   onClick={() => { navigator.clipboard.writeText(location.origin + `/events/${event.id}`); setShowShare(false); }}
@@ -143,21 +148,17 @@ export default function EventCard({ event }) {
               </div>
             )}
           </div>
-          <button className={`text-gray-700 hover:text-fjwuGreen ${saved ? 'text-fjwuGreen' : ''}`} title="Save" onClick={toggleSave}>
+          <button className={`text-gray-700 hover:text-fjwuGreen ${saved ? 'text-fjwuGreen' : ''}`} title="Save" onClick={(e) => toggleSave(e)}>
             <Bookmark className={`w-4 h-4 ${saved ? 'fill-fjwuGreen text-fjwuGreen' : ''}`} />
           </button>
-          <button className="ml-auto btn btn-primary" disabled={registering} onClick={register}>{registering ? 'Registering…' : 'Register'}</button>
         </div>
       </div>
       {/* Title and description */}
       <div className="px-4 pb-4">
-        <div className="mt-2 flex items-start justify-between">
-          <div>
-            <h3 className="text-base font-semibold text-fjwuGreen">{event.title}</h3>
-            <p className="text-sm text-gray-700 mt-1">{event.description?.slice(0, 160)}{event.description?.length > 160 ? '…' : ''}</p>
-            <div className="text-xs text-gray-500 mt-1">{dateStr}</div>
-          </div>
-          <button className="btn btn-secondary" onClick={() => navigate(`/events/${event.id}`)}>Open</button>
+        <div className="mt-2">
+          <h3 className="text-base font-semibold text-fjwuGreen">{event.title}</h3>
+          <p className="text-sm text-gray-700 mt-1">{event.description?.slice(0, 160)}{event.description?.length > 160 ? '…' : ''}</p>
+          <div className="text-xs text-gray-500 mt-1">{dateStr}</div>
         </div>
         {toast && <div className="mt-2 text-sm text-green-700">{toast}</div>}
       </div>

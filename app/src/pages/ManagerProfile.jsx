@@ -66,11 +66,10 @@ export default function ManagerProfile() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen">
       <Navbar />
-      <div className="flex flex-1">
-        <Sidebar role="manager" managerProfileComplete={!!profile?.profileComplete} current={'manager_profile'} onChange={() => {}} />
-        <main className="flex-1 p-6">
+      <Sidebar role="manager" managerProfileComplete={!!profile?.profileComplete} current={'manager_profile'} onChange={() => {}} />
+      <main className="p-6 pt-14 pl-64">
       <div className="w-full max-w-3xl mx-auto border border-gray-200 p-6 rounded-none shadow-none">
         <h1 className="text-xl font-semibold text-fjwuGreen mb-1">Society / Club Profile</h1>
         <div className="text-sm text-gray-600 mb-4">{existing ? 'Update your society information' : 'Create your society profile to unlock event management features.'}</div>
@@ -130,8 +129,7 @@ export default function ManagerProfile() {
           </div>
         </form>
       </div>
-        </main>
-      </div>
+      </main>
     </div>
   );
 }

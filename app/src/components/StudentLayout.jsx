@@ -1,14 +1,12 @@
 import Navbar from './Navbar.jsx';
-import StudentSidebar from './StudentSidebar.jsx';
+import LeftSidebar from './LeftSidebar.jsx';
 
 export default function StudentLayout({ children }) {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="flex flex-1">
-        <StudentSidebar />
-        <main className="flex-1 p-6">{children}</main>
-      </div>
+      <LeftSidebar role="student" />
+      <main className="pt-14 pl-64 h-screen overflow-y-auto p-6">{children}</main>
     </div>
   );
 }

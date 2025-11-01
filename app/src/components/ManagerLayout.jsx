@@ -1,22 +1,20 @@
 import Navbar from './Navbar.jsx';
-import Sidebar from './Sidebar.jsx';
+import LeftSidebar from './LeftSidebar.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export default function ManagerLayout({ children, current = 'all', onChange }) {
   const { profile } = useAuth();
   const isManager = profile?.role === 'manager';
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-gray-50">
       <Navbar onSearch={onChange && ((q) => onChange('search:' + q))} />
-      <div className="flex flex-1">
-        <Sidebar
-          role={isManager ? 'manager' : 'student'}
-          managerProfileComplete={!!profile?.profileComplete}
-          current={current}
-          onChange={onChange}
-        />
-        <main className="flex-1 p-6">{children}</main>
-      </div>
+      <LeftSidebar
+        role={isManager ? 'manager' : 'student'}
+        managerProfileComplete={!!profile?.profileComplete}
+        current={current}
+        onChange={onChange}
+      />
+      <main className="pt-14 pl-64 h-screen overflow-y-auto p-6">{children}</main>
     </div>
   );
 }

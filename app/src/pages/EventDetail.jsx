@@ -5,6 +5,7 @@ import { doc, getDoc, addDoc, collection, serverTimestamp, updateDoc, increment,
 import { useAuth } from '../context/AuthContext.jsx';
 import ManagerLayout from '../components/ManagerLayout.jsx';
 import StudentLayout from '../components/StudentLayout.jsx';
+import PostDescription from '../components/PostDescription.jsx';
 
 export default function EventDetail() {
   const { id } = useParams();
@@ -154,28 +155,8 @@ export default function EventDetail() {
               <img src={event.posterURL} alt="Poster" className="w-full object-cover" />
             </div>
           )}
+          <PostDescription event={event} />
           <div className="p-6">
-            <h1 className="text-2xl font-semibold text-fjwuGreen">{event.title}</h1>
-            <p className="text-gray-700 mt-2">{event.description}</p>
-            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              <div><span className="font-medium">Category:</span> {event.eventCategory}</div>
-              <div><span className="font-medium">Type:</span> {event.eventType}</div>
-              <div><span className="font-medium">Venue:</span> {event.venue}</div>
-              <div><span className="font-medium">Campus:</span> {event.campus || '—'}</div>
-              <div><span className="font-medium">Date:</span> {event.eventDate?.seconds ? new Date(event.eventDate.seconds * 1000).toLocaleDateString() : (event.eventDate ? new Date(event.eventDate).toLocaleDateString() : '—')}</div>
-              <div><span className="font-medium">Time:</span> {event.startTime || '—'}{event.endTime ? ` – ${event.endTime}` : ''}</div>
-              <div><span className="font-medium">Duration:</span> {event.duration ? `${event.duration} min` : '—'}</div>
-              <div><span className="font-medium">Organizer:</span> {event.organizerName}</div>
-              <div><span className="font-medium">Department:</span> {event.organizerDepartment || '—'}</div>
-              <div><span className="font-medium">Registration Deadline:</span> {event.registrationDeadline?.seconds ? new Date(event.registrationDeadline.seconds * 1000).toLocaleDateString() : (event.registrationDeadline ? new Date(event.registrationDeadline).toLocaleDateString() : '—')}</div>
-              <div><span className="font-medium">Visibility:</span> {event.visibility}</div>
-              <div><span className="font-medium">Approval Status:</span> {event.approvalStatus || 'pending'}</div>
-            </div>
-            {event.brochureLink && (
-              <div className="mt-3 text-sm">
-                <span className="font-medium">Brochure:</span> <a className="underline text-fjwuGreen" href={event.brochureLink} target="_blank" rel="noreferrer">Open</a>
-              </div>
-            )}
             <div className="mt-4 flex gap-3">
               <button className="btn btn-primary" onClick={rsvp}>RSVP / Register</button>
               <a href={addToCalendarUrl} target="_blank" rel="noreferrer" className="btn btn-secondary">Add to Calendar</a>

@@ -19,7 +19,7 @@ export default function Sidebar({ current, onChange, role = 'student', managerPr
   const items = role === 'manager' ? [...baseItems, ...managerItems] : baseItems;
 
   return (
-    <aside className="w-64 border-r border-gray-200 bg-white">
+    <aside className="fixed top-14 left-0 bottom-0 w-64 border-r border-gray-200 bg-white overflow-y-auto">
       <div className="p-4">
         <ul className="space-y-2">
           {items.map((it) => (
@@ -38,7 +38,7 @@ export default function Sidebar({ current, onChange, role = 'student', managerPr
         </ul>
       </div>
       {role === 'manager' && (
-        <div className="p-4 text-xs text-gray-500">
+        <div className="p-4 text-xs text-gray-500 border-t">
           <Link to="/manager/create-event" className="underline">Create Event</Link> (managers)
         </div>
       )}
