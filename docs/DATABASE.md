@@ -29,6 +29,7 @@
   - `approvalStatus`: string (default: pending)
   - `tags`: string[] (optional)
   - `attendeesCount`: number (aggregate)
+  - `likesCount`: number (aggregate; updated when users like/unlike)
   - `dateTime`: string (ISO shortcut built from `eventDate` + `startTime`)
   - `createdBy`: string (manager UID)
   - `createdAt`: Firestore Timestamp

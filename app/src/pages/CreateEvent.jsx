@@ -116,6 +116,7 @@ export default function CreateEvent() {
         tags: tags ? tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
         visibility,
         attendeesCount: 0,
+        likesCount: 0,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         createdBy: user.uid,

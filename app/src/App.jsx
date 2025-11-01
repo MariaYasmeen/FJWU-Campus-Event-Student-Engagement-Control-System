@@ -16,6 +16,7 @@ import StudentRegistrations from "./pages/StudentRegistrations.jsx";
 import StudentCommunity from "./pages/StudentCommunity.jsx";
 import StudentProfile from "./pages/StudentProfile.jsx";
 import StudentSettings from "./pages/StudentSettings.jsx";
+import StudentSearch from "./pages/StudentSearch.jsx";
 
 // ✅ Fix: RootRedirect must be placed inside AuthProvider
 function RootRedirectWrapper() {
@@ -103,6 +104,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <StudentSettings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/search"
+            element={
+              <ProtectedRoute>
+                <StudentSearch />
               </ProtectedRoute>
             }
           />

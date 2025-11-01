@@ -10,6 +10,7 @@
 - `/student/community`: Community/Discussions (optional).
 - `/student/profile`: Student Profile.
 - `/student/settings`: Settings (optional).
+- `/student/search`: Detailed filters (department, type, category, date, location, status) with dynamic results.
 - `/manager`: Manager home feed; extras shown, plus “Create Profile” when incomplete.
 - `/manager/profile`: Manager profile creation.
 - `/manager/create-event`: Event creation form.

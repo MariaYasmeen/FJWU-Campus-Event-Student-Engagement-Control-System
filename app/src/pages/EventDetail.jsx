@@ -4,15 +4,17 @@ import { db } from '../firebase';
 import { doc, getDoc, addDoc, collection, serverTimestamp, updateDoc, increment, getDocs, orderBy, query, setDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext.jsx';
 import ManagerLayout from '../components/ManagerLayout.jsx';
+import StudentLayout from '../components/StudentLayout.jsx';
 
 export default function EventDetail() {
   const { id } = useParams();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState([]);
+  const isManager = profile?.role === 'manager';
 
   useEffect(() => {
     const load = async () => {
@@ -122,25 +124,28 @@ export default function EventDetail() {
   };
 
   if (loading) {
+    const Wrap = isManager ? ManagerLayout : StudentLayout;
     return (
-      <ManagerLayout current={'all'} onChange={() => {}}>
+      <Wrap current={'all'} onChange={() => {}}>
         <div>Loading event...</div>
-      </ManagerLayout>
+      </Wrap>
     );
   }
 
   if (error) {
+    const Wrap = isManager ? ManagerLayout : StudentLayout;
     return (
-      <ManagerLayout current={'all'} onChange={() => {}}>
+      <Wrap current={'all'} onChange={() => {}}>
         <div className="text-red-600">{error}</div>
-      </ManagerLayout>
+      </Wrap>
     );
   }
 
   if (!event) return null;
 
+  const Wrap = isManager ? ManagerLayout : StudentLayout;
   return (
-    <ManagerLayout current={'all'} onChange={() => {}}>
+    <Wrap current={'all'} onChange={() => {}}>
       <div className="mx-auto max-w-3xl space-y-4">
         {/* Post Card */}
         <article className="border border-gray-200 rounded-none shadow-none overflow-hidden">
@@ -203,6 +208,6 @@ export default function EventDetail() {
           </div>
         </section>
       </div>
-    </ManagerLayout>
+    </Wrap>
   );
 }

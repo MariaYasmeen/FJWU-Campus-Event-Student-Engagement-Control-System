@@ -1,11 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useState } from 'react';
+import { Bell, Bookmark, User, Search } from 'lucide-react';
 
 export default function Navbar({ onSearch }) {
   const { profile, logout } = useAuth();
   const [query, setQuery] = useState('');
   const navigate = useNavigate();
+  const [showNotif, setShowNotif] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -27,14 +29,27 @@ export default function Navbar({ onSearch }) {
             }}
           />
         </div>
-        <div className="flex items-center gap-3">
-          {/* Icons simplified as letters for minimal build */}
-          <button className="btn btn-secondary" title="Notifications">🔔</button>
-          <button className="btn btn-secondary" title="Bookmarks" onClick={() => navigate(profile?.role === 'manager' ? '/manager/favourites' : '/student/favourites')}>🔖</button>
+        <div className="flex items-center gap-3 relative">
+          <button className="btn btn-secondary" title="Search" onClick={() => navigate('/student/search')}>
+            <Search className="w-4 h-4" />
+          </button>
+          <button className="btn btn-secondary" title="Notifications" onClick={() => setShowNotif((s) => !s)}>
+            <Bell className="w-4 h-4" />
+          </button>
+          {showNotif && (
+            <div className="absolute right-0 top-12 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+              <div className="p-3 text-sm text-gray-700">No notifications yet.</div>
+            </div>
+          )}
+          <button className="btn btn-secondary" title="Bookmarks" onClick={() => navigate(profile?.role === 'manager' ? '/manager/favourites' : '/student/favourites')}>
+            <Bookmark className="w-4 h-4" />
+          </button>
           {profile?.role === 'manager' && (
             <button className="btn btn-primary" title="Create Event" onClick={() => navigate('/manager/create-event')}>＋</button>
           )}
-          <button className="btn btn-secondary" title="Profile" onClick={() => navigate(profile?.role === 'manager' ? '/manager/profile' : '/student')}>👤</button>
+          <button className="btn btn-secondary" title="Profile" onClick={() => navigate(profile?.role === 'manager' ? '/manager/profile' : '/student/profile')}>
+            <User className="w-4 h-4" />
+          </button>
           <button className="btn btn-secondary" onClick={handleLogout}>Logout</button>
         </div>
       </div>
