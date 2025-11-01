@@ -104,3 +104,16 @@ Notes
   - `createdAt`: Firestore Timestamp
 
 Note: These indexes enable fast retrieval for Student and Manager favourites and Student registrations pages; originals remain in `events/*/attendees` etc.
+## Users — Student Profile Fields
+
+- Collection `users/{uid}`
+  - `name`: string
+  - `department`: string
+  - `email`: string
+  - `phone`: string (optional)
+  - `rollNumber`: string (Student ID)
+  - `status`: string (Active | Alumni | Suspended)
+  - `photoURL`: string (profile image URL; uploaded to Storage)
+
+Notes
+- Student Profile page updates this document. Security rules restrict write access to the owner user.
