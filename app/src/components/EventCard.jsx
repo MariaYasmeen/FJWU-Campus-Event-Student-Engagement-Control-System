@@ -3,11 +3,11 @@ import { db } from '../firebase';
 import { doc, setDoc, deleteDoc, getDoc, collection, getDocs, serverTimestamp, updateDoc, increment, addDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useEffect, useState } from 'react';
-import { Heart, MessageCircle, Share2, Bookmark } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Bookmark, MoreVertical } from 'lucide-react';
 
 export default function EventCard({ event }) {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [likesCount, setLikesCount] = useState(0);
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -15,6 +15,8 @@ export default function EventCard({ event }) {
   const [registering, setRegistering] = useState(false);
   const [toast, setToast] = useState('');
   const [organizerLogo, setOrganizerLogo] = useState('');
+  const [showManagerMenu, setShowManagerMenu] = useState(false);
+  const [deleted, setDeleted] = useState(false);
   const organizerId = event.organizerId || event.createdBy || null;
   const organizerName = event.organizerName || '';
 
@@ -54,6 +56,7 @@ export default function EventCard({ event }) {
 
   const toggleLike = async (e) => {
     e?.stopPropagation?.();
+    if (!user) return;
     const likeRef = doc(db, 'events', event.id, 'likes', user.uid);
     const snap = await getDoc(likeRef);
     if (snap.exists()) {
@@ -67,6 +70,14 @@ export default function EventCard({ event }) {
       setLikesCount((c) => c + 1);
       try { await updateDoc(doc(db, 'events', event.id), { likesCount: increment(1) }); } catch {}
     }
+    // Ensure sync with Firestore after toggle
+    try {
+      const evSnap = await getDoc(doc(db, 'events', event.id));
+      if (evSnap.exists()) {
+        const val = evSnap.data().likesCount;
+        if (typeof val === 'number') setLikesCount(val);
+      }
+    } catch {}
   };
 
   const toggleSave = async (e) => {
@@ -144,15 +155,37 @@ export default function EventCard({ event }) {
     return `${days} day${days !== 1 ? 's' : ''} ago`;
   })();
 
+  const canManage = profile?.role === 'manager' && user?.uid && (event.createdBy === user.uid);
+
+  const handleDelete = async (e) => {
+    e?.stopPropagation?.();
+    if (!canManage) return;
+    const ok = confirm('Are you sure you want to delete this post?');
+    if (!ok) return;
+    try {
+      await deleteDoc(doc(db, 'events', event.id));
+      setDeleted(true);
+    } catch (err) {
+      alert(err.message || 'Failed to delete');
+    }
+  };
+
+  const handleEdit = (e) => {
+    e?.stopPropagation?.();
+    if (!canManage) return;
+    navigate(`/manager/events/${event.id}/edit`);
+  };
+
   return (
+    deleted ? null : (
     <article
       className="max-w-md mx-auto border border-gray-200 bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition"
       onClick={() => navigate(`/events/${event.id}`)}
     >
-      {/* Organizer header (top-right) */}
-      {(organizerId || organizerName) && (
-        <div className="px-4 pt-3">
-          <div className="flex items-center justify-end gap-2" onClick={(e) => { e.stopPropagation(); if (organizerId) navigate(`/society/${organizerId}`); }}>
+      {/* Header row: organizer left, manager menu right */}
+      <div className="px-4 pt-3 flex items-center justify-between">
+        {(organizerId || organizerName) && (
+          <div className="flex items-center gap-2" onClick={(e) => { e.stopPropagation(); if (organizerId) navigate(`/society/${organizerId}`); }}>
             {organizerLogo ? (
               <img src={organizerLogo} alt="Logo" className="w-6 h-6 rounded-full border border-gray-200" />
             ) : (
@@ -162,8 +195,21 @@ export default function EventCard({ event }) {
               {organizerName || 'Society'}
             </button>
           </div>
-        </div>
-      )}
+        )}
+        {canManage && (
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
+            <button className="text-gray-700 hover:text-fjwuGreen" onClick={() => setShowManagerMenu((s) => !s)} title="Manage">
+              <MoreVertical className="w-4 h-4" />
+            </button>
+            {showManagerMenu && (
+              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                <button className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50" onClick={handleEdit}>Edit Post</button>
+                <button className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50" onClick={handleDelete}>Delete Post</button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
       {event.posterURL && (
         <img src={event.posterURL} alt="Poster" className="w-full object-cover" />
       )}
@@ -210,5 +256,6 @@ export default function EventCard({ event }) {
         {toast && <div className="mt-2 text-sm text-green-700">{toast}</div>}
       </div>
     </article>
+    )
   );
 }

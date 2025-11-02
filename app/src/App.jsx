@@ -137,6 +137,14 @@ export default function App() {
             }
           />
           <Route
+            path="/manager/events/:id/edit"
+            element={
+              <ProtectedRoute>
+                <CreateEvent />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/manager/profile"
             element={
               <ProtectedRoute>

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import Navbar from '../components/Navbar.jsx';
-import Sidebar from '../components/Sidebar.jsx';
+import ManagerLayout from '../components/ManagerLayout.jsx';
 import EventFeed from '../components/EventFeed.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
@@ -60,10 +59,16 @@ export default function ManagerHome() {
   };
 
   return (
-    <div className="min-h-screen">
-      <Navbar onSearch={setSearch} />
-      <Sidebar role="manager" managerProfileComplete={!!profile?.profileComplete} current={filter} onChange={handleSidebarChange} />
-      <div className="flex items-center justify-between px-6 pt-14 pl-64">
+    <ManagerLayout
+      current={filter}
+      onChange={(key) => {
+        if (typeof key === 'string' && key.startsWith('search:')) {
+          return setSearch(key.replace('search:', ''));
+        }
+        handleSidebarChange(key);
+      }}
+    >
+      <div className="flex items-center justify-between">
         {!profile?.profileComplete ? (
           <button className="btn btn-primary" onClick={() => navigate('/manager/profile')}>Start Creating Your Society Profile</button>
         ) : (
@@ -83,7 +88,7 @@ export default function ManagerHome() {
           )}
         </div>
       </div>
-      <main className="p-6 pl-64">
+      <div>
           {/* Dashboard Overview */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="card p-4">
@@ -132,7 +137,7 @@ export default function ManagerHome() {
             <h3 className="text-lg font-semibold mb-3">Your Events</h3>
             <EventFeed filter={'manager_events'} search={search} />
           </div>
-      </main>
-    </div>
+      </div>
+    </ManagerLayout>
   );
 }

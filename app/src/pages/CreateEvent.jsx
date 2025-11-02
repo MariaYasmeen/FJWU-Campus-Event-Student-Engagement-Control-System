@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { db } from '../firebase';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { useNavigate } from 'react-router-dom';
+import { addDoc, collection, serverTimestamp, doc, updateDoc, getDoc } from 'firebase/firestore';
+import { useNavigate, useParams } from 'react-router-dom';
 import { uploadFile } from '../utils/storage';
-import Navbar from '../components/Navbar.jsx';
-import Sidebar from '../components/Sidebar.jsx';
+import ManagerLayout from '../components/ManagerLayout.jsx';
 
 export default function CreateEvent() {
   const { user, profile } = useAuth();
+  const { id } = useParams();
+  const isEdit = !!id;
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [eventCategory, setEventCategory] = useState('');
@@ -83,47 +84,90 @@ export default function CreateEvent() {
       } else if (startDate) {
         dateTime = startDate;
       }
-      const docRef = await addDoc(collection(db, 'events'), {
-        title,
-        description,
-        eventCategory,
-        eventType,
-        // New schedule fields
-        eventDate: eventDate ? new Date(eventDate) : null,
-        startTime: startTime || '',
-        endTime: endTime || '',
-        duration: duration ? Number(duration) : null,
-        // Backward compat
-        startDate: startDate ? new Date(startDate) : null,
-        endDate: endDate ? new Date(endDate) : null,
-        registrationDeadline: registrationDeadline ? new Date(registrationDeadline) : null,
-        venue,
-        locationLink,
-        organizerId: user.uid,
-        organizerName,
-        organizerDepartment,
-        organizerEmail: organizerContact,
-        organizerContact,
-        campus,
-        isRegistrationRequired,
-        registrationLink,
-        registrationFee: Number(registrationFee || 0),
-        maxParticipants: maxParticipants ? Number(maxParticipants) : null,
-        status,
-        bannerImage: posterURL,
-        posterURL,
-        brochureLink: brochureLink || '',
-        tags: tags ? tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
-        visibility,
-        attendeesCount: 0,
-        likesCount: 0,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        createdBy: user.uid,
-        dateTime,
-        approvalStatus: 'pending',
-      });
-      navigate(`/events/${docRef.id}`);
+      if (isEdit) {
+        // Update existing event
+        const ref = doc(db, 'events', id);
+        const snap = await getDoc(ref);
+        if (!snap.exists()) throw new Error('Event not found');
+        const data = snap.data();
+        if (data.createdBy !== user.uid) throw new Error('You can only edit your own event');
+        await updateDoc(ref, {
+          title,
+          description,
+          eventCategory,
+          eventType,
+          eventDate: eventDate ? new Date(eventDate) : null,
+          startTime: startTime || '',
+          endTime: endTime || '',
+          duration: duration ? Number(duration) : null,
+          startDate: startDate ? new Date(startDate) : null,
+          endDate: endDate ? new Date(endDate) : null,
+          registrationDeadline: registrationDeadline ? new Date(registrationDeadline) : null,
+          venue,
+          locationLink,
+          organizerId: user.uid,
+          organizerName,
+          organizerDepartment,
+          organizerEmail: organizerContact,
+          organizerContact,
+          campus,
+          isRegistrationRequired,
+          registrationLink,
+          registrationFee: Number(registrationFee || 0),
+          maxParticipants: maxParticipants ? Number(maxParticipants) : null,
+          status,
+          bannerImage: posterURL,
+          posterURL,
+          brochureLink: brochureLink || '',
+          tags: tags ? tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
+          visibility,
+          dateTime,
+          updatedAt: serverTimestamp(),
+        });
+        navigate(`/events/${id}`);
+      } else {
+        const docRef = await addDoc(collection(db, 'events'), {
+          title,
+          description,
+          eventCategory,
+          eventType,
+          // New schedule fields
+          eventDate: eventDate ? new Date(eventDate) : null,
+          startTime: startTime || '',
+          endTime: endTime || '',
+          duration: duration ? Number(duration) : null,
+          // Backward compat
+          startDate: startDate ? new Date(startDate) : null,
+          endDate: endDate ? new Date(endDate) : null,
+          registrationDeadline: registrationDeadline ? new Date(registrationDeadline) : null,
+          venue,
+          locationLink,
+          organizerId: user.uid,
+          organizerName,
+          organizerDepartment,
+          organizerEmail: organizerContact,
+          organizerContact,
+          campus,
+          isRegistrationRequired,
+          registrationLink,
+          registrationFee: Number(registrationFee || 0),
+          maxParticipants: maxParticipants ? Number(maxParticipants) : null,
+          status,
+          bannerImage: posterURL,
+          posterURL,
+          brochureLink: brochureLink || '',
+          tags: tags ? tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
+          visibility,
+          attendeesCount: 0,
+          likesCount: 0,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          createdBy: user.uid,
+          dateTime,
+          approvalStatus: 'pending',
+        });
+        navigate(`/events/${docRef.id}`);
+      }
     } catch (err) {
       setError(err.message || 'Failed to create event');
     } finally {
@@ -131,16 +175,58 @@ export default function CreateEvent() {
     }
   };
 
+  useEffect(() => {
+    const loadForEdit = async () => {
+      if (!isEdit) return;
+      setLoading(true);
+      try {
+        const ref = doc(db, 'events', id);
+        const snap = await getDoc(ref);
+        if (!snap.exists()) throw new Error('Event not found');
+        const data = snap.data();
+        if (data.createdBy !== user.uid) throw new Error('You can only edit your own event');
+        setTitle(data.title || '');
+        setDescription(data.description || '');
+        setEventCategory(data.eventCategory || '');
+        setEventType(data.eventType || 'Offline');
+        const d = data.eventDate?.seconds ? new Date(data.eventDate.seconds * 1000) : (data.eventDate ? new Date(data.eventDate) : (data.dateTime ? new Date(data.dateTime) : null));
+        setEventDate(d ? d.toISOString().slice(0, 10) : '');
+        setStartTime(data.startTime || '');
+        setEndTime(data.endTime || '');
+        setDuration(data.duration ? String(data.duration) : '');
+        setStartDate(data.startDate?.seconds ? new Date(data.startDate.seconds * 1000).toISOString() : '');
+        setEndDate(data.endDate?.seconds ? new Date(data.endDate.seconds * 1000).toISOString() : '');
+        setRegistrationDeadline(data.registrationDeadline?.seconds ? new Date(data.registrationDeadline.seconds * 1000).toISOString().slice(0,10) : '');
+        setVenue(data.venue || '');
+        setLocationLink(data.locationLink || '');
+        setOrganizerName(data.organizerName || '');
+        setOrganizerDepartment(data.organizerDepartment || '');
+        setOrganizerContact(data.organizerEmail || data.organizerContact || '');
+        setIsRegistrationRequired(!!data.isRegistrationRequired);
+        setRegistrationLink(data.registrationLink || '');
+        setRegistrationFee(typeof data.registrationFee === 'number' ? data.registrationFee : 0);
+        setMaxParticipants(data.maxParticipants ? String(data.maxParticipants) : '');
+        setStatus(data.status || 'Published');
+        setEventImageUrl(data.posterURL || '');
+        setBrochureLink(data.brochureLink || '');
+        setCampus(data.campus || '');
+        setTags(Array.isArray(data.tags) ? data.tags.join(', ') : '');
+        setVisibility(data.visibility || 'public');
+      } catch (err) {
+        setError(err.message || 'Failed to load event for edit');
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (user) loadForEdit();
+  }, [isEdit, id, user]);
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <div className="flex flex-1">
-        <Sidebar role={profile?.role === 'manager' ? 'manager' : 'student'} managerProfileComplete={!!profile?.profileComplete} current={'create_event'} onChange={() => {}} />
-        <main className="flex-1 p-6">
+    <ManagerLayout current={'create_event'} onChange={() => {}}>
           {!profile?.profileComplete && profile?.role === 'manager' ? (
             <div className="max-w-3xl mx-auto">
               <div className="border border-gray-200 p-6 rounded-none shadow-none">
-                <h1 className="text-xl font-semibold text-fjwuGreen">Create Event</h1>
+                <h1 className="text-xl font-semibold text-fjwuGreen">{isEdit ? 'Edit Event' : 'Create Event'}</h1>
                 <p className="mt-2 text-gray-700">
                   Please create your society profile before creating events.
                 </p>
@@ -157,7 +243,14 @@ export default function CreateEvent() {
           ) : (
             <div className="max-w-3xl mx-auto">
               <div className="border border-gray-200 p-6 rounded-none shadow-none">
-                <h1 className="text-xl font-semibold text-fjwuGreen mb-4">Create Event</h1>
+                <div className="flex items-center justify-between mb-4">
+                  <h1 className="text-xl font-semibold text-fjwuGreen">{isEdit ? 'Edit Event' : 'Create Event'}</h1>
+                  {isEdit && (
+                    <button className="btn btn-primary" onClick={(e) => onSubmit(e)} disabled={loading}>
+                      {loading ? 'Saving...' : 'Save Changes'}
+                    </button>
+                  )}
+                </div>
                 {error && <div className="text-sm text-red-600 mb-2">{error}</div>}
                 <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Basic Event Details */}
@@ -285,17 +378,17 @@ export default function CreateEvent() {
                     <input className="input mt-1" value={tags} onChange={(e) => setTags(e.target.value)} />
                   </label>
 
-                  <div className="md:col-span-2">
-                    <button className="btn btn-primary" disabled={loading}>
-                      {loading ? 'Creating...' : 'Create Event'}
-                    </button>
-                  </div>
+                  {!isEdit && (
+                    <div className="md:col-span-2">
+                      <button className="btn btn-primary" disabled={loading}>
+                        {loading ? 'Creating...' : 'Create Event'}
+                      </button>
+                    </div>
+                  )}
                 </form>
               </div>
             </div>
           )}
-        </main>
-      </div>
-    </div>
+    </ManagerLayout>
   );
 }
