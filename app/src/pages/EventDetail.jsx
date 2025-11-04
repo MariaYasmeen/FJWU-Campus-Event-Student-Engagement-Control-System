@@ -115,6 +115,8 @@ export default function EventDetail() {
         text: comment.trim(),
         createdAt: serverTimestamp(),
       });
+      // increment aggregated counter on event doc
+      try { await updateDoc(doc(db, 'events', id), { commentsCount: increment(1) }); } catch {}
       setComment('');
       const cQuery = query(collection(db, 'events', id, 'comments'), orderBy('createdAt', 'desc'));
       const cSnap = await getDocs(cQuery);
@@ -160,7 +162,22 @@ export default function EventDetail() {
             <div className="mt-4 flex gap-3">
               <button className="btn btn-primary" onClick={rsvp}>RSVP / Register</button>
               <a href={addToCalendarUrl} target="_blank" rel="noreferrer" className="btn btn-secondary">Add to Calendar</a>
-              <button className="btn btn-secondary" onClick={() => navigator.share ? navigator.share({ title: event.title, url: location.href }) : navigator.clipboard.writeText(location.href)}>Share</button>
+              <button
+                className="btn btn-secondary"
+                onClick={async () => {
+                  try {
+                    const shareUrl = location.origin + `/events/${id}`;
+                    if (navigator.share) {
+                      await navigator.share({ title: event?.title || 'Event', url: shareUrl });
+                    } else {
+                      await navigator.clipboard.writeText(shareUrl);
+                      alert('Event link copied to clipboard');
+                    }
+                  } finally {
+                    try { await updateDoc(doc(db, 'events', id), { sharesCount: increment(1) }); } catch {}
+                  }
+                }}
+              >Share</button>
               <a href={`mailto:${event.organizerEmail || ''}`} className="btn btn-secondary">Contact Organizer</a>
             </div>
           </div>

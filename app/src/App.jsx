@@ -16,6 +16,7 @@ import StudentRegistrations from "./pages/StudentRegistrations.jsx";
 import StudentCommunity from "./pages/StudentCommunity.jsx";
 import StudentProfile from "./pages/StudentProfile.jsx";
 import StudentSettings from "./pages/StudentSettings.jsx";
+import StudentSocieties from "./pages/StudentSocieties.jsx";
 import StudentSearch from "./pages/StudentSearch.jsx";
 import SocietyProfile from "./pages/SocietyProfile.jsx";
 import YourEvents from "./pages/YourEvents.jsx";
@@ -109,6 +110,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <StudentSettings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/societies"
+            element={
+              <ProtectedRoute>
+                <StudentSocieties />
               </ProtectedRoute>
             }
           />
