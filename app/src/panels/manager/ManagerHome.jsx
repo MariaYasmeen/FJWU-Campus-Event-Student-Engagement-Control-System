@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import ManagerLayout from '../components/ManagerLayout.jsx';
-import EventFeed from '../components/EventFeed.jsx';
-import { useAuth } from '../context/AuthContext.jsx';
+import ManagerLayout from './ManagerLayout.jsx';
+import EventFeed from '../../components/EventFeed.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db } from '../../firebase';
 
 export default function ManagerHome() {
   const [filter, setFilter] = useState('all');

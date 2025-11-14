@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { db } from '../firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import ManagerLayout from '../components/ManagerLayout.jsx';
+import { db } from '../../firebase';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import StudentLayout from './StudentLayout.jsx';
 import { useNavigate } from 'react-router-dom';
 
-export default function ManagerSocieties() {
+export default function StudentSocieties() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,7 +29,7 @@ export default function ManagerSocieties() {
   }, []);
 
   return (
-    <ManagerLayout current={'societies'} onChange={() => {}}>
+    <StudentLayout>
       <div className="mx-auto max-w-4xl">
         <h1 className="text-xl font-semibold mb-3">All Societies</h1>
         {error && <div className="text-sm text-red-600 mb-2">{error}</div>}
@@ -64,6 +64,6 @@ export default function ManagerSocieties() {
           </div>
         )}
       </div>
-    </ManagerLayout>
+    </StudentLayout>
   );
 }

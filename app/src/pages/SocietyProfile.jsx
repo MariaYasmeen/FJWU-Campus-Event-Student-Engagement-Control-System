@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
-import { db } from '../firebase';
+import { db } from '../firebase.js';
 import { doc, getDoc, collection, getDocs, query, where, orderBy, updateDoc, increment, setDoc, deleteDoc } from 'firebase/firestore';
-import StudentLayout from '../components/StudentLayout.jsx';
-import ManagerLayout from '../components/ManagerLayout.jsx';
+import StudentLayout from '../panels/student/StudentLayout.jsx';
+import ManagerLayout from '../panels/manager/ManagerLayout.jsx';
 import { Heart, MessageCircle, Share2 } from 'lucide-react';
 
 export default function SocietyProfile() {

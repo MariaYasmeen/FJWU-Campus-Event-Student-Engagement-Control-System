@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext.jsx';
-import { db } from '../firebase';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { db } from '../../firebase';
 import { doc, updateDoc, getDoc, serverTimestamp, collection, getDocs, query, where, setDoc, deleteDoc, increment } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
-import ManagerLayout from '../components/ManagerLayout.jsx';
+import ManagerLayout from './ManagerLayout.jsx';
 
 export default function ManagerProfile() {
   const { user, profile } = useAuth();
@@ -91,7 +91,7 @@ export default function ManagerProfile() {
               </div>
               <div className="mt-4 space-y-1">
                 <div className="text-2xl font-semibold text-fjwuGreen">{societyName || 'Your Society Name'}</div>
-                <div className="text-sm text-gray-700">{description || 'Your description or tagline'}</div>
+                <div className="text-sm text-gray-700 whitespace-pre-wrap">{description || 'Your description or tagline'}</div>
                 <div className="text-sm text-gray-700">{email || user?.email || ''}</div>
                 <div className="text-sm text-gray-600">{category || 'Category'} · {eventCount} events conducted</div>
               </div>

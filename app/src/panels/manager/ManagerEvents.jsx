@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import ManagerLayout from '../components/ManagerLayout.jsx';
-import EventFeed from '../components/EventFeed.jsx';
+import ManagerLayout from './ManagerLayout.jsx';
+import EventFeed from '../../components/EventFeed.jsx';
 
 export default function ManagerEvents() {
   const [search, setSearch] = useState('');

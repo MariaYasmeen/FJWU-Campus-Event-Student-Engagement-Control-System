@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext.jsx';
-import { db } from '../firebase';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { db } from '../../firebase';
 import { addDoc, collection, serverTimestamp, doc, updateDoc, getDoc } from 'firebase/firestore';
 import { useNavigate, useParams } from 'react-router-dom';
-import { uploadFile } from '../utils/storage';
-import ManagerLayout from '../components/ManagerLayout.jsx';
+import { uploadFile } from '../../utils/storage';
+import ManagerLayout from './ManagerLayout.jsx';
 
 export default function CreateEvent() {
   const { user, profile } = useAuth();

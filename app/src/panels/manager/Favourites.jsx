@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext.jsx';
-import { db } from '../firebase';
-import { collection, getDocs, query } from 'firebase/firestore';
-import StudentLayout from '../components/StudentLayout.jsx';
-import EventCard from '../components/EventCard.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { db } from '../../firebase';
+import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import ManagerLayout from './ManagerLayout.jsx';
+import EventCard from '../../components/EventCard.jsx';
 
-export default function StudentFavourites() {
-  const { user } = useAuth();
+export default function Favourites() {
+  const { user, profile } = useAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,6 +18,7 @@ export default function StudentFavourites() {
       const q = query(base);
       const snap = await getDocs(q);
       const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      // Map saved post snapshot to EventCard-friendly shape
       const events = docs.map((d) => ({
         id: d.eventId || d.id,
         title: d.eventTitle,
@@ -36,9 +37,11 @@ export default function StudentFavourites() {
   }, [user]);
 
   return (
-    <StudentLayout>
+    <ManagerLayout current={'favorites'} onChange={() => {}}>
       <div className="mx-auto max-w-3xl">
-        <h1 className="text-xl font-semibold mb-3">Saved Events</h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-xl font-semibold">Saved Posts</h1>
+        </div>
         {loading ? (
           <div>Loading...</div>
         ) : (
@@ -47,11 +50,11 @@ export default function StudentFavourites() {
               <EventCard key={e.id} event={e} />
             ))}
             {!items.length && (
-              <div className="text-sm text-gray-600">No saved events yet.</div>
+              <div className="text-sm text-gray-600">No saved posts yet.</div>
             )}
           </div>
         )}
       </div>
-    </StudentLayout>
+    </ManagerLayout>
   );
 }

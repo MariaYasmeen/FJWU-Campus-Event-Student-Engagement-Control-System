@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import ManagerLayout from '../components/ManagerLayout.jsx';
-import { auth, db } from '../firebase';
+import ManagerLayout from './ManagerLayout.jsx';
+import { auth, db } from '../../firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, deleteUser } from 'firebase/auth';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
 
 export default function ManagerSettings() {
   const { user } = useAuth();
@@ -15,6 +15,7 @@ export default function ManagerSettings() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -78,9 +79,8 @@ export default function ManagerSettings() {
     }
   };
 
-  const handleDeleteAccount = async () => {
+  const confirmDelete = async () => {
     if (!user) return;
-    if (!confirm('Delete your account? This cannot be undone.')) return;
     setSaving(true);
     setError('');
     setMessage('');
@@ -92,6 +92,7 @@ export default function ManagerSettings() {
       setError(e.message || 'Failed to delete account');
     } finally {
       setSaving(false);
+      setShowConfirm(false);
     }
   };
 
@@ -151,8 +152,20 @@ export default function ManagerSettings() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4">
           <h2 className="text-lg font-semibold mb-3">Delete Account</h2>
           <p className="text-sm text-gray-700">This action is permanent and cannot be undone.</p>
-          <button className="btn btn-secondary mt-3" onClick={handleDeleteAccount}>Delete Account</button>
+          <button className="btn btn-secondary mt-3" onClick={() => setShowConfirm(true)}>Delete Account</button>
         </div>
+        {showConfirm && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 max-w-sm w-full p-5 text-center">
+              <h3 className="text-lg font-semibold">Delete Account</h3>
+              <p className="text-sm text-gray-700 mt-2">This action is permanent and cannot be undone. Are you sure?</p>
+              <div className="mt-4 flex items-center justify-center gap-2">
+                <button className="btn btn-secondary" onClick={() => setShowConfirm(false)}>Cancel</button>
+                <button className="btn btn-primary" disabled={saving} onClick={confirmDelete}>Yes, Delete</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </ManagerLayout>
   );

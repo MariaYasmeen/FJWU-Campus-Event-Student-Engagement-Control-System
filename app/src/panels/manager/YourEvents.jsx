@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext.jsx';
-import { db } from '../firebase';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { db } from '../../firebase';
 import { collection, getDocs, orderBy, query, doc, deleteDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
-import ManagerLayout from '../components/ManagerLayout.jsx';
+import ManagerLayout from './ManagerLayout.jsx';
 
 export default function YourEvents() {
   const { user } = useAuth();

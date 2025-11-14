@@ -1,4 +1,4 @@
-import StudentLayout from '../components/StudentLayout.jsx';
+import StudentLayout from './StudentLayout.jsx';
 
 export default function StudentCommunity() {
   return (

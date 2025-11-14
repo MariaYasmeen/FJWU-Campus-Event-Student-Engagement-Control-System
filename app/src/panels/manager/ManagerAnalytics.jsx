@@ -1,4 +1,4 @@
-import ManagerLayout from '../components/ManagerLayout.jsx';
+import ManagerLayout from './ManagerLayout.jsx';
 
 export default function ManagerAnalytics() {
   return (

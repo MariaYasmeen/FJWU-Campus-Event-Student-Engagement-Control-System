@@ -3,8 +3,8 @@ import { useParams } from 'react-router-dom';
 import { db } from '../firebase';
 import { doc, getDoc, addDoc, collection, serverTimestamp, updateDoc, increment, getDocs, orderBy, query, setDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext.jsx';
-import ManagerLayout from '../components/ManagerLayout.jsx';
-import StudentLayout from '../components/StudentLayout.jsx';
+import ManagerLayout from '../panels/manager/ManagerLayout.jsx';
+import StudentLayout from '../panels/student/StudentLayout.jsx';
 import PostDescription from '../components/PostDescription.jsx';
 
 export default function EventDetail() {

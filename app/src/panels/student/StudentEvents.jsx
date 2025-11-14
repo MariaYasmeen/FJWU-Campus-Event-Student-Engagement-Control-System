@@ -1,5 +1,5 @@
-import StudentLayout from '../components/StudentLayout.jsx';
-import EventFeed from '../components/EventFeed.jsx';
+import StudentLayout from './StudentLayout.jsx';
+import EventFeed from '../../components/EventFeed.jsx';
 import { useState } from 'react';
 
 export default function StudentEvents() {

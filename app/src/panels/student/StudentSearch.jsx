@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { db } from '../firebase';
+import { db } from '../../firebase';
 import { collection, getDocs, orderBy, query, where } from 'firebase/firestore';
-import StudentLayout from '../components/StudentLayout.jsx';
-import EventCard from '../components/EventCard.jsx';
+import StudentLayout from './StudentLayout.jsx';
+import EventCard from '../../components/EventCard.jsx';
 
 export default function StudentSearch() {
   const [selectedDepartments, setSelectedDepartments] = useState([]);

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../context/AuthContext.jsx';
-import { db } from '../firebase';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { db } from '../../firebase';
 import { doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import StudentLayout from '../components/StudentLayout.jsx';
+import StudentLayout from './StudentLayout.jsx';
 
 export default function StudentProfile() {
   const { user } = useAuth();
@@ -74,7 +74,7 @@ export default function StudentProfile() {
     <StudentLayout>
       <div className="min-h-[calc(100vh-64px)] w-full bg-gray-50">
         <div className="mx-auto max-w-3xl px-4 py-8">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 relative">
             <div className="px-6 pt-8 pb-4 text-center bg-fjwuGreen/5 rounded-t-2xl">
               <div className="mx-auto w-28 h-28 rounded-full ring-4 ring-white shadow-sm overflow-hidden flex items-center justify-center bg-gray-100">
                 {photoURL ? (
@@ -91,27 +91,14 @@ export default function StudentProfile() {
                 <div className="text-sm text-gray-700">{email || user?.email || ''}</div>
                 <div className="text-sm"><span className="font-medium">Status:</span> {status}</div>
             </div>
-
-            {/* Edit / Settings menu */}
-            <div className="absolute right-4 top-4">
-              <button
-                className="btn btn-secondary flex items-center gap-1"
-                title="Options"
-                onClick={() => setShowMenu((s) => !s)}
-              >
-                ✏️
-              </button>
-              {showMenu && (
-                <div className="mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg text-left">
-                  <button className="block w-full px-3 py-2 text-sm hover:bg-gray-50" onClick={() => { setEditing(true); setShowMenu(false); }}>
-                    Edit Profile
-                  </button>
-                  <button className="block w-full px-3 py-2 text-sm hover:bg-gray-50" onClick={() => { setShowMenu(false); alert('Open Settings / Change Password from Settings page.'); }}>
-                    Settings / Change Password
-                  </button>
-                </div>
-              )}
-            </div>
+            {/* Pen edit icon (top-left) */}
+            <button
+              className="absolute left-4 top-4 w-9 h-9 inline-flex items-center justify-center rounded-full bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-gray-50 transition"
+              title="Edit Profile"
+              onClick={() => setEditing(true)}
+            >
+              ✏️
+            </button>
           </div>
 
               {editing && (

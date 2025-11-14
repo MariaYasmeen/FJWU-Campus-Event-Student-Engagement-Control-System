@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import EventFeed from '../components/EventFeed.jsx';
-import StudentLayout from '../components/StudentLayout.jsx';
+import EventFeed from '../../components/EventFeed.jsx';
+import StudentLayout from './StudentLayout.jsx';
 
 export default function StudentHome() {
   const [search, setSearch] = useState('');
