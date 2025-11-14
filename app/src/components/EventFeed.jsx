@@ -22,6 +22,23 @@ export default function EventFeed({ filter = 'all', search = '' }) {
         rows = rows.filter((e) => (e.title || '').toLowerCase().includes(term) || (e.description || '').toLowerCase().includes(term));
       }
 
+      const now = Date.now();
+      const getDateMs = (e) => {
+        if (e.eventDate?.seconds) return e.eventDate.seconds * 1000;
+        if (e.eventDate) return Date.parse(e.eventDate);
+        if (e.dateTime) return Date.parse(e.dateTime);
+        if (e.startDate) return Date.parse(e.startDate);
+        return 0;
+      };
+      const canStillRegister = (e) => {
+        if (e.isOpenEvent) return true;
+        if (!e.isRegistrationRequired) return true;
+        const d = e.registrationDeadline;
+        const deadlineMs = d?.seconds ? d.seconds * 1000 : (d ? Date.parse(d) : undefined);
+        if (!deadlineMs) return true;
+        return deadlineMs >= now;
+      };
+
       if (filter === 'manager_events' && user) {
         rows = rows.filter((e) => e.createdBy === user.uid);
       } else if (filter === 'attended') {
@@ -32,13 +49,24 @@ export default function EventFeed({ filter = 'all', search = '' }) {
       } else if (filter === 'societies') {
         // placeholder for societies listing
       } else if (filter === 'student_all') {
-        const now = Date.now();
         rows = rows.filter((e) => {
-          const dateMs = e.eventDate?.seconds ? e.eventDate.seconds * 1000 : (e.dateTime ? Date.parse(e.dateTime) : Date.parse(e.startDate || 0));
+          const dateMs = getDateMs(e);
           const upcoming = dateMs ? dateMs >= now : true;
           const statusOk = (e.status || 'Published').toLowerCase() === 'published';
           const approvalOk = (e.approvalStatus || 'approved') !== 'rejected';
           return upcoming && statusOk && approvalOk;
+        });
+      } else if (filter === 'student_upcoming' || filter === 'manager_upcoming') {
+        rows = rows.filter((e) => {
+          const dateMs = getDateMs(e);
+          const statusOk = (e.status || 'Published').toLowerCase() === 'published';
+          const approvalOk = (e.approvalStatus || 'approved') !== 'rejected';
+          return dateMs >= now && canStillRegister(e) && statusOk && approvalOk;
+        });
+      } else if (filter === 'student_past' || filter === 'manager_past') {
+        rows = rows.filter((e) => {
+          const dateMs = getDateMs(e);
+          return dateMs && dateMs < now;
         });
       }
       setEvents(rows);

@@ -4,13 +4,26 @@ import { useState } from 'react';
 
 export default function StudentEvents() {
   const [search, setSearch] = useState('');
+  const [tab, setTab] = useState('upcoming'); // 'upcoming' | 'past'
   return (
     <StudentLayout>
       <div className="flex items-center justify-between mb-3">
-        <h1 className="text-xl font-semibold">All Events</h1>
-        <input className="input w-64" placeholder="Search by title" value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+      <div className="mb-4 flex items-center gap-2">
+        <button
+          className={`px-3 py-1 border rounded-none ${tab==='upcoming'?'bg-fjwuGreen text-white border-fjwuGreen':'bg-white text-gray-700 border-gray-300'}`}
+          onClick={() => setTab('upcoming')}
+        >
+          Upcoming Events
+        </button>
+        <button
+          className={`px-3 py-1 border rounded-none ${tab==='past'?'bg-fjwuGreen text-white border-fjwuGreen':'bg-white text-gray-700 border-gray-300'}`}
+          onClick={() => setTab('past')}
+        >
+          Past Events
+        </button>
       </div>
-      <EventFeed filter={'student_all'} search={search} />
+      <EventFeed filter={tab==='upcoming' ? 'student_upcoming' : 'student_past'} search={search} />
     </StudentLayout>
   );
 }

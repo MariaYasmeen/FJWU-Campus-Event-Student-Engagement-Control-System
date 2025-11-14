@@ -30,6 +30,7 @@ export default function CreateEvent() {
   const [organizerDepartment, setOrganizerDepartment] = useState(profile?.department || '');
   const [organizerContact, setOrganizerContact] = useState(profile?.contactEmail || profile?.email || '');
   const [isRegistrationRequired, setIsRegistrationRequired] = useState(false);
+  const [isOpenEvent, setIsOpenEvent] = useState(false);
   const [registrationLink, setRegistrationLink] = useState('');
   const [registrationFee, setRegistrationFee] = useState(0);
   const [maxParticipants, setMaxParticipants] = useState('');
@@ -92,6 +93,9 @@ export default function CreateEvent() {
         if (!snap.exists()) throw new Error('Event not found');
         const data = snap.data();
         if (data.createdBy !== user.uid) throw new Error('You can only edit your own event');
+        const finalIsRegistrationRequired = isOpenEvent ? false : isRegistrationRequired;
+        const finalRegistrationFee = isOpenEvent ? 0 : Number(registrationFee || 0);
+        const finalRegistrationLink = isOpenEvent ? '' : registrationLink;
         await updateDoc(ref, {
           title,
           description,
@@ -112,9 +116,10 @@ export default function CreateEvent() {
           organizerEmail: organizerContact,
           organizerContact,
           campus,
-          isRegistrationRequired,
-          registrationLink,
-          registrationFee: Number(registrationFee || 0),
+          isRegistrationRequired: finalIsRegistrationRequired,
+          registrationLink: finalRegistrationLink,
+          registrationFee: finalRegistrationFee,
+          isOpenEvent,
           maxParticipants: maxParticipants ? Number(maxParticipants) : null,
           status,
           bannerImage: posterURL,
@@ -127,6 +132,9 @@ export default function CreateEvent() {
         });
         navigate(`/events/${id}`);
       } else {
+        const finalIsRegistrationRequired = isOpenEvent ? false : isRegistrationRequired;
+        const finalRegistrationFee = isOpenEvent ? 0 : Number(registrationFee || 0);
+        const finalRegistrationLink = isOpenEvent ? '' : registrationLink;
         const docRef = await addDoc(collection(db, 'events'), {
           title,
           description,
@@ -149,9 +157,10 @@ export default function CreateEvent() {
           organizerEmail: organizerContact,
           organizerContact,
           campus,
-          isRegistrationRequired,
-          registrationLink,
-          registrationFee: Number(registrationFee || 0),
+          isRegistrationRequired: finalIsRegistrationRequired,
+          registrationLink: finalRegistrationLink,
+          registrationFee: finalRegistrationFee,
+          isOpenEvent,
           maxParticipants: maxParticipants ? Number(maxParticipants) : null,
           status,
           bannerImage: posterURL,
@@ -204,6 +213,7 @@ export default function CreateEvent() {
         setOrganizerDepartment(data.organizerDepartment || '');
         setOrganizerContact(data.organizerEmail || data.organizerContact || '');
         setIsRegistrationRequired(!!data.isRegistrationRequired);
+        setIsOpenEvent(!!data.isOpenEvent);
         setRegistrationLink(data.registrationLink || '');
         setRegistrationFee(typeof data.registrationFee === 'number' ? data.registrationFee : 0);
         setMaxParticipants(data.maxParticipants ? String(data.maxParticipants) : '');
@@ -364,21 +374,53 @@ export default function CreateEvent() {
                       <span className="text-sm">Registration Deadline</span>
                       <input type="date" className="input mt-1" value={registrationDeadline} onChange={(e) => setRegistrationDeadline(e.target.value)} />
                     </label>
-                    <label className="block">
-                      <span className="text-sm">Registration Required?</span>
-                      <select className="input mt-1" value={isRegistrationRequired ? 'yes' : 'no'} onChange={(e) => setIsRegistrationRequired(e.target.value === 'yes')}>
-                        <option value="no">No</option>
-                        <option value="yes">Yes</option>
-                      </select>
-                    </label>
-                    <label className="block">
-                      <span className="text-sm">Registration Link</span>
-                      <input className="input mt-1" value={registrationLink} onChange={(e) => setRegistrationLink(e.target.value)} />
-                    </label>
-                    <label className="block">
-                      <span className="text-sm">Registration Fee</span>
-                      <input type="number" className="input mt-1" value={registrationFee} onChange={(e) => setRegistrationFee(e.target.value)} />
-                    </label>
+                    <div className="block">
+                      <span className="text-sm">Registration Options</span>
+                      <div className="mt-2 flex items-center gap-6">
+                        <label className="inline-flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            className="input"
+                            checked={isRegistrationRequired && !isOpenEvent}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setIsRegistrationRequired(checked);
+                              if (checked) setIsOpenEvent(false);
+                            }}
+                          />
+                          <span>Registration Required</span>
+                        </label>
+                        <label className="inline-flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            className="input"
+                            checked={isOpenEvent}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setIsOpenEvent(checked);
+                              if (checked) {
+                                setIsRegistrationRequired(false);
+                                setRegistrationFee(0);
+                                setRegistrationLink('');
+                              }
+                            }}
+                          />
+                          <span>Open Event (Free, No Registration)</span>
+                        </label>
+                      </div>
+                    </div>
+                    {isRegistrationRequired && !isOpenEvent && (
+                      <>
+                        <label className="block">
+                          <span className="text-sm">Registration Link</span>
+                          <input className="input mt-1" value={registrationLink} onChange={(e) => setRegistrationLink(e.target.value)} />
+                        </label>
+                        <label className="block">
+                          <span className="text-sm">Registration Fee</span>
+                          <input type="number" className="input mt-1" value={registrationFee} onChange={(e) => setRegistrationFee(e.target.value)} />
+                        </label>
+                      </>
+                    )}
 
                     <label className="block md:col-span-2">
                       <span className="text-sm">Brochure or PDF Link (optional)</span>

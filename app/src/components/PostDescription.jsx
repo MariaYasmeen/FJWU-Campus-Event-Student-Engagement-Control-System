@@ -23,6 +23,40 @@ export default function PostDescription({ event }) {
           </div>
         )}
       </div>
+      {/* Registration and fee details */}
+      <div className="mt-4 text-sm">
+        {event?.isOpenEvent ? (
+          <div className="text-gray-700">This event is free and open to everyone. No registration required.</div>
+        ) : (
+          <>
+            {event?.isRegistrationRequired ? (
+              <div className="space-y-1">
+                <div className="text-gray-700">Registration Required</div>
+                {event?.registrationLink && (
+                  <div>
+                    <span className="font-medium">Registration Link:</span>{' '}
+                    <a className="underline text-fjwuGreen" href={event.registrationLink} target="_blank" rel="noreferrer">Open</a>
+                  </div>
+                )}
+                {Number(event?.registrationFee || 0) > 0 ? (
+                  <div><span className="font-medium">Registration Fee:</span> {Number(event.registrationFee)} </div>
+                ) : (
+                  <div className="text-gray-700">This event is free.</div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <div className="text-gray-700">No registration required.</div>
+                {Number(event?.registrationFee || 0) > 0 ? (
+                  <div><span className="font-medium">Event Fee:</span> {Number(event.registrationFee)}</div>
+                ) : (
+                  <div className="text-gray-700">This event is free.</div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
