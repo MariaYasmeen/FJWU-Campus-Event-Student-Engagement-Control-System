@@ -38,11 +38,21 @@ export function AuthProvider({ children }) {
 
         setUser(u);
         try {
-          const snap = await getDoc(doc(db, 'users', u.uid));
+          const userRef = doc(db, 'users', u.uid);
+          const snap = await getDoc(userRef);
           if (snap.exists()) {
             setProfile(snap.data());
           } else {
-            setProfile(null);
+            // Robust fallback: create a minimal profile if missing
+            const minimal = {
+              uid: u.uid,
+              email: (u.email || '').toLowerCase().trim(),
+              name: u.displayName || '',
+              role: 'student',
+              createdAt: serverTimestamp(),
+            };
+            await setDoc(userRef, minimal);
+            setProfile(minimal);
           }
         } catch (e) {
           console.error('Failed to load profile', e);
@@ -65,21 +75,19 @@ export function AuthProvider({ children }) {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     const uid = cred.user.uid;
 
-    // Create Firestore user profile (ensure minimal required fields exist)
-    const userDocRef = doc(db, 'users', uid);
-    await setDoc(userDocRef, {
+    // Create Firestore user profile
+    await setDoc(doc(db, 'users', uid), {
       uid,
       email: email.toLowerCase().trim(),
-      name: `${(firstName || '').trim()} ${(lastName || '').trim()}`.trim(),
+      name: `${firstName} ${lastName}`.trim(),
+      firstName,
+      lastName,
+      department,
+      semester,
       role: role === 'manager' ? 'manager' : 'student',
       createdAt: serverTimestamp(),
-      // Preserve additional student/manager fields
-      firstName: firstName || null,
-      lastName: lastName || null,
-      department: department || null,
-      semester: semester || null,
       profileComplete: role === 'manager' ? false : true,
-    }, { merge: true });
+    });
 
     const actionCodeSettings = {
       url: `${window.location.origin}/login`,
@@ -105,20 +113,19 @@ export function AuthProvider({ children }) {
       throw new Error(`Verification email resent to ${email}. Please check inbox or spam.`);
     }
     // Enforce role selection matches stored role
-    const userDocRef = doc(db, 'users', cred.user.uid);
-    let snap = await getDoc(userDocRef);
-    // If profile doc missing (legacy accounts), create a minimal one on the fly
+    const userRef = doc(db, 'users', cred.user.uid);
+    let snap = await getDoc(userRef);
     if (!snap.exists()) {
-      const minimalName = cred.user.displayName || (email?.split('@')[0] || '');
-      await setDoc(userDocRef, {
+      // Create missing profile to avoid login dead-end
+      const dataToCreate = {
         uid: cred.user.uid,
-        email: email.toLowerCase().trim(),
-        name: minimalName,
+        email: (cred.user.email || '').toLowerCase().trim(),
+        name: cred.user.displayName || '',
         role: role === 'manager' ? 'manager' : 'student',
         createdAt: serverTimestamp(),
-        profileComplete: role === 'manager' ? false : true,
-      }, { merge: true });
-      snap = await getDoc(userDocRef);
+      };
+      await setDoc(userRef, dataToCreate);
+      snap = await getDoc(userRef);
     }
     const data = snap.data();
     if (data.role !== role) {

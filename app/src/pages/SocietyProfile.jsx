@@ -31,7 +31,17 @@ export default function SocietyProfile() {
         }
         const eQ = query(collection(db, 'events'), where('createdBy', '==', uid));
         const eSnap = await getDocs(eQ);
-        setEvents(eSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        const base = eSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        // Compute commentsCount for accuracy if not present
+        const withCounts = await Promise.all(base.map(async (ev) => {
+          try {
+            const cSnap = await getDocs(collection(db, 'events', ev.id, 'comments'));
+            return { ...ev, commentsCount: cSnap.size };
+          } catch {
+            return { ...ev, commentsCount: typeof ev.commentsCount === 'number' ? ev.commentsCount : 0 };
+          }
+        }));
+        setEvents(withCounts);
       } catch (e) {
         setError(e.message || 'Failed to load society');
       } finally {

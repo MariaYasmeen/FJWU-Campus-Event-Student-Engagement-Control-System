@@ -14,6 +14,8 @@ export default function Sidebar({ role = 'student', managerProfileComplete = tru
 
   const managerLinks = [
     { to: '/manager', label: 'Dashboard' },
+    { to: '/manager/events', label: 'All Events' },
+    { to: '/manager/societies', label: 'All Societies' },
     { to: '/manager/your-events', label: 'Your Events' },
     { to: '/manager/create-event', label: 'Create Event' },
     { to: '/manager/favourites', label: 'Favourites' },

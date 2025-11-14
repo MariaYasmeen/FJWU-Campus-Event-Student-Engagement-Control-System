@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { db } from '../firebase';
-import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import StudentLayout from '../components/StudentLayout.jsx';
 
 export default function StudentProfile() {
@@ -51,29 +51,18 @@ export default function StudentProfile() {
     setError('');
     try {
       const refDoc = doc(db, 'users', user.uid);
-      try {
-        await updateDoc(refDoc, {
-          name,
-          department,
-          email,
-          phone,
-          rollNumber,
-          status,
-          photoURL: photoURL || null,
-        });
-      } catch (err) {
-        // if doc doesn't exist, create it
-        await setDoc(refDoc, {
-          name,
-          department,
-          email,
-          phone,
-          rollNumber,
-          status,
-          photoURL: photoURL || null,
-        }, { merge: true });
-      }
+      await updateDoc(refDoc, {
+        name,
+        department,
+        email,
+        phone,
+        rollNumber,
+        status,
+        photoURL: photoURL || null,
+        updatedAt: serverTimestamp(),
+      });
       setSaved(true);
+      setEditing(false);
     } catch (e) {
       setError(e.message || 'Failed to update profile');
     }
@@ -85,7 +74,7 @@ export default function StudentProfile() {
     <StudentLayout>
       <div className="min-h-[calc(100vh-64px)] w-full bg-gray-50">
         <div className="mx-auto max-w-3xl px-4 py-8">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 relative">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
             <div className="px-6 pt-8 pb-4 text-center bg-fjwuGreen/5 rounded-t-2xl">
               <div className="mx-auto w-28 h-28 rounded-full ring-4 ring-white shadow-sm overflow-hidden flex items-center justify-center bg-gray-100">
                 {photoURL ? (
@@ -101,25 +90,31 @@ export default function StudentProfile() {
                 <div className="text-sm text-gray-700">{rollNumber || 'Roll Number / Student ID'}</div>
                 <div className="text-sm text-gray-700">{email || user?.email || ''}</div>
                 <div className="text-sm"><span className="font-medium">Status:</span> {status}</div>
-              </div>
-              {/* Edit/Settings menu */}
-              <div className="absolute right-4 top-4">
-                <button
-                  className="btn btn-secondary"
-                  title="Options"
-                  onClick={() => setShowMenu((s) => !s)}
-                >
-                  ✏️
-                </button>
-                {showMenu && (
-                  <div className="mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg text-left">
-                    <button className="block w-full px-3 py-2 text-sm hover:bg-gray-50" onClick={() => { setEditing(true); setShowMenu(false); }}>Edit Profile</button>
-                    <button className="block w-full px-3 py-2 text-sm hover:bg-gray-50" onClick={() => { setShowMenu(false); location.href = '/student/settings'; }}>Settings / Change Password</button>
-                  </div>
-                )}
-              </div>
             </div>
-            {editing && (
+
+            {/* Edit / Settings menu */}
+            <div className="absolute right-4 top-4">
+              <button
+                className="btn btn-secondary flex items-center gap-1"
+                title="Options"
+                onClick={() => setShowMenu((s) => !s)}
+              >
+                ✏️
+              </button>
+              {showMenu && (
+                <div className="mt-2 w-44 bg-white border border-gray-200 rounded-md shadow-lg text-left">
+                  <button className="block w-full px-3 py-2 text-sm hover:bg-gray-50" onClick={() => { setEditing(true); setShowMenu(false); }}>
+                    Edit Profile
+                  </button>
+                  <button className="block w-full px-3 py-2 text-sm hover:bg-gray-50" onClick={() => { setShowMenu(false); alert('Open Settings / Change Password from Settings page.'); }}>
+                    Settings / Change Password
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+              {editing && (
               <div className="px-6 py-6">
                 <h2 className="text-lg font-semibold mb-3">Edit Profile</h2>
                 {error && <div className="text-sm text-red-600 mb-2">{error}</div>}
@@ -127,10 +122,10 @@ export default function StudentProfile() {
                   <div>Loading...</div>
                 ) : (
                   <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <label className="block md:col-span-2">
-                      <span className="text-sm">Photo URL</span>
-                      <input className="input mt-1" placeholder="https://..." value={photoURL} onChange={(e) => setPhotoURL(e.target.value)} />
-                    </label>
+                  <label className="block md:col-span-2">
+                    <span className="text-sm">Photo URL</span>
+                    <input className="input mt-1" placeholder="https://..." value={photoURL} onChange={(e) => setPhotoURL(e.target.value)} />
+                  </label>
                     <label className="block">
                       <span className="text-sm">Full Name</span>
                       <input className="input mt-1" value={name} onChange={(e) => setName(e.target.value)} />
@@ -162,13 +157,13 @@ export default function StudentProfile() {
 
                     <div className="md:col-span-2 flex gap-2 mt-2">
                       <button className="btn btn-primary" type="submit">Save</button>
-                      <button type="button" className="btn btn-secondary" onClick={() => setEditing(false)}>Cancel</button>
                       {saved && <div className="text-sm text-green-700">Saved</div>}
+                      <button type="button" className="btn btn-secondary" onClick={() => setEditing(false)}>Cancel</button>
                     </div>
                   </form>
                 )}
               </div>
-            )}
+              )}
           </div>
         </div>
       </div>

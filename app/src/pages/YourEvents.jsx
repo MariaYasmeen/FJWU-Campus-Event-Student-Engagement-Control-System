@@ -67,18 +67,44 @@ export default function YourEvents() {
                   <td className="px-4 py-2">{e.title}</td>
                   <td className="px-4 py-2">{e.startDate?.seconds ? new Date(e.startDate.seconds*1000).toLocaleString() : e.dateTime}</td>
                   <td className="px-4 py-2">{e.status || 'Published'}</td>
-                  <td className="px-4 py-2 flex gap-2">
-                    <button className="btn btn-secondary" onClick={() => navigate(`/events/${e.id}`)}>View</button>
-                    <button className="btn btn-secondary" onClick={() => navigate(`/manager/events/${e.id}/edit`)}>Edit</button>
-                    <button className="btn btn-secondary" onClick={() => onDelete(e.id)}>Delete</button>
+                  <td className="px-4 py-2 relative">
+                    <KebabMenu
+                      onView={() => navigate(`/events/${e.id}`)}
+                      onEdit={() => navigate(`/manager/events/${e.id}/edit`)}
+                      onDelete={() => onDelete(e.id)}
+                    />
                   </td>
-                </tr>
-              ))}
+              </tr>
+            ))}
             </tbody>
           </table>
         </div>
       )}
       </div>
     </ManagerLayout>
+  );
+}
+
+function KebabMenu({ onView, onEdit, onDelete }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="inline-block text-left">
+      <button
+        className="w-8 h-8 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition"
+        onClick={() => setOpen((v) => !v)}
+        aria-label="Actions"
+      >
+        ⋮
+      </button>
+      {open && (
+        <div className="absolute right-4 mt-2 w-36 origin-top-right rounded-xl bg-white shadow-md border border-gray-200 transition-all">
+          <div className="py-2 text-sm">
+            <button className="block w-full text-left px-3 py-2 hover:bg-gray-50" onClick={() => { setOpen(false); onView(); }}>View</button>
+            <button className="block w-full text-left px-3 py-2 hover:bg-gray-50" onClick={() => { setOpen(false); onEdit(); }}>Edit</button>
+            <button className="block w-full text-left px-3 py-2 hover:bg-gray-50 text-red-600" onClick={() => { setOpen(false); onDelete(); }}>Delete</button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

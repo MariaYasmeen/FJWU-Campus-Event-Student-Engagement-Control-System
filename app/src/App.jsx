@@ -16,8 +16,11 @@ import StudentRegistrations from "./pages/StudentRegistrations.jsx";
 import StudentCommunity from "./pages/StudentCommunity.jsx";
 import StudentProfile from "./pages/StudentProfile.jsx";
 import StudentSettings from "./pages/StudentSettings.jsx";
-import StudentSocieties from "./pages/StudentSocieties.jsx";
 import StudentSearch from "./pages/StudentSearch.jsx";
+import StudentSocieties from "./pages/StudentSocieties.jsx";
+import ManagerEvents from "./pages/ManagerEvents.jsx";
+import ManagerSocieties from "./pages/ManagerSocieties.jsx";
+import AdminEvents from "./pages/AdminEvents.jsx";
 import SocietyProfile from "./pages/SocietyProfile.jsx";
 import YourEvents from "./pages/YourEvents.jsx";
 import ManagerAnalytics from "./pages/ManagerAnalytics.jsx";
@@ -114,14 +117,6 @@ export default function App() {
             }
           />
           <Route
-            path="/student/societies"
-            element={
-              <ProtectedRoute>
-                <StudentSocieties />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/student/search"
             element={
               <ProtectedRoute>
@@ -130,10 +125,26 @@ export default function App() {
             }
           />
           <Route
+            path="/student/societies"
+            element={
+              <ProtectedRoute>
+                <StudentSocieties />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/manager"
             element={
               <ProtectedRoute>
                 <ManagerHome />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/manager/events"
+            element={
+              <ProtectedRoute>
+                <ManagerEvents />
               </ProtectedRoute>
             }
           />
@@ -178,6 +189,14 @@ export default function App() {
             }
           />
           <Route
+            path="/manager/societies"
+            element={
+              <ProtectedRoute>
+                <ManagerSocieties />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/manager/analytics"
             element={
               <ProtectedRoute>
@@ -206,6 +225,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <EventDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/events"
+            element={
+              <ProtectedRoute>
+                <AdminEvents />
               </ProtectedRoute>
             }
           />
