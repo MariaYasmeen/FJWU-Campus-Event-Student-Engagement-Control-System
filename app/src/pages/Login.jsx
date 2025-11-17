@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export default function Login() {
@@ -9,15 +10,14 @@ export default function Login() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const { login, message } = useAuth();
-  const navigate = useNavigate();
+  const router = useRouter();
 
-  const onSubmit = async (e) => {
-    e.preventDefault();
+  const onSubmit = async () => {
     setError(null);
     setLoading(true);
     try {
       await login({ email, password, role: roleTab });
-      navigate('/');
+      router.replace('/');
     } catch (err) {
       setError(err.message || 'Login failed');
     } finally {
@@ -26,32 +26,33 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
-      <div className="w-full max-w-md p-6 card">
-        <h1 className="text-2xl font-semibold text-fjwuGreen mb-4">airelpier — Login</h1>
-        <div className="flex gap-2 mb-4">
-          <button className={`btn ${roleTab === 'student' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setRoleTab('student')}>Student</button>
-          <button className={`btn ${roleTab === 'manager' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setRoleTab('manager')}>Event Manager</button>
-        </div>
-        {(error || message) && (
-          <div className="mb-3 text-sm text-red-600">{error || message}</div>
-        )}
-        <form onSubmit={onSubmit} className="space-y-3">
-          <label className="block">
-            <span className="text-sm">Email</span>
-            <input type="email" className="input mt-1" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </label>
-          <label className="block">
-            <span className="text-sm">Password</span>
-            <input type="password" className="input mt-1" value={password} onChange={(e) => setPassword(e.target.value)} required />
-          </label>
-          <button type="submit" className="btn btn-primary w-full" disabled={loading}>{loading ? 'Signing in...' : 'Sign in'}</button>
-        </form>
-        <div className="mt-4 text-center text-sm">
-          <span className="text-gray-600">No account?</span>{' '}
-          <Link to="/signup" className="text-fjwuGreen underline">Create an account</Link>
-        </div>
-      </div>
-    </div>
+    <View style={styles.container}>
+      <Text style={styles.title}>Login</Text>
+      {(error || message) && <Text style={styles.error}>{error || message}</Text>}
+      <View style={styles.roleRow}>
+        <Pressable onPress={() => setRoleTab('student')} style={[styles.roleBtn, roleTab==='student' && styles.roleActive]}><Text style={[styles.roleText, roleTab==='student' && styles.roleTextActive]}>Student</Text></Pressable>
+        <Pressable onPress={() => setRoleTab('manager')} style={[styles.roleBtn, roleTab==='manager' && styles.roleActive]}><Text style={[styles.roleText, roleTab==='manager' && styles.roleTextActive]}>Event Manager</Text></Pressable>
+      </View>
+      <TextInput placeholder="Email" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} style={styles.input} />
+      <TextInput placeholder="Password" secureTextEntry value={password} onChangeText={setPassword} style={styles.input} />
+      <Pressable onPress={onSubmit} style={styles.button} disabled={loading}><Text style={styles.buttonText}>{loading ? 'Signing in…' : 'Sign in'}</Text></Pressable>
+      <Pressable onPress={() => router.push('/signup')} style={styles.link}><Text style={styles.linkText}>Create an account</Text></Pressable>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 16, justifyContent: 'center' },
+  title: { fontSize: 24, fontWeight: '600', marginBottom: 12 },
+  error: { color: '#dc2626', marginBottom: 8 },
+  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16, marginBottom: 10 },
+  roleRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  roleBtn: { flex: 1, borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingVertical: 10, alignItems: 'center' },
+  roleActive: { borderColor: '#111' },
+  roleText: { color: '#555' },
+  roleTextActive: { color: '#111', fontWeight: '600' },
+  button: { backgroundColor: '#111', paddingVertical: 12, borderRadius: 8, alignItems: 'center' },
+  buttonText: { color: '#fff', fontSize: 16 },
+  link: { marginTop: 12, alignItems: 'center' },
+  linkText: { color: '#2563eb' }
+});

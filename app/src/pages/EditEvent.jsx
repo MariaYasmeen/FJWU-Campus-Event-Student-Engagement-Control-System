@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { db } from '../firebase';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function EditEvent() {
-  const { id } = useParams();
-  const navigate = useNavigate();
+  const { id } = useLocalSearchParams();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [form, setForm] = useState({
@@ -33,7 +34,7 @@ export default function EditEvent() {
     const load = async () => {
       setLoading(true);
       try {
-        const snap = await getDoc(doc(db, 'events', id));
+        const snap = await getDoc(doc(db, 'events', String(id)));
         if (!snap.exists()) {
           setError('Event not found');
         } else {
@@ -70,8 +71,7 @@ export default function EditEvent() {
 
   const updateField = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
-  const onSubmit = async (e) => {
-    e.preventDefault();
+  const onSubmit = async () => {
     setError(null);
     try {
       const payload = {
@@ -95,97 +95,45 @@ export default function EditEvent() {
         tags: form.tags ? form.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
         updatedAt: serverTimestamp(),
       };
-      await updateDoc(doc(db, 'events', id), payload);
-      alert('Event updated');
-      navigate('/manager/events');
+      await updateDoc(doc(db, 'events', String(id)), payload);
+      router.replace('/manager/events');
     } catch (err) {
       setError(err.message || 'Failed to update');
     }
   };
 
-  if (loading) return <div className="p-6">Loading...</div>;
-  if (error) return <div className="p-6 text-red-600">{error}</div>;
+  if (loading) return <View style={styles.container}><Text>Loading...</Text></View>;
+  if (error) return <View style={styles.container}><Text style={{ color: '#dc2626' }}>{error}</Text></View>;
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-semibold mb-4">Edit Event</h1>
-      <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <label className="block">
-          <span className="text-sm">Event Title</span>
-          <input className="input mt-1" value={form.title} onChange={(e) => updateField('title', e.target.value)} required />
-        </label>
-        <label className="block md:col-span-2">
-          <span className="text-sm">Description</span>
-          <textarea className="input mt-1" rows={4} value={form.description} onChange={(e) => updateField('description', e.target.value)} />
-        </label>
-        <label className="block">
-          <span className="text-sm">Category</span>
-          <input className="input mt-1" value={form.eventCategory} onChange={(e) => updateField('eventCategory', e.target.value)} />
-        </label>
-        <label className="block">
-          <span className="text-sm">Type</span>
-          <select className="input mt-1" value={form.eventType} onChange={(e) => updateField('eventType', e.target.value)}>
-            {['Online','Offline','Hybrid'].map((t) => <option key={t}>{t}</option>)}
-          </select>
-        </label>
-        <label className="block">
-          <span className="text-sm">Start</span>
-          <input type="datetime-local" className="input mt-1" value={form.startDate} onChange={(e) => updateField('startDate', e.target.value)} />
-        </label>
-        <label className="block">
-          <span className="text-sm">End</span>
-          <input type="datetime-local" className="input mt-1" value={form.endDate} onChange={(e) => updateField('endDate', e.target.value)} />
-        </label>
-        <label className="block">
-          <span className="text-sm">Registration Deadline</span>
-          <input type="datetime-local" className="input mt-1" value={form.registrationDeadline} onChange={(e) => updateField('registrationDeadline', e.target.value)} />
-        </label>
-        <label className="block">
-          <span className="text-sm">Venue</span>
-          <input className="input mt-1" value={form.venue} onChange={(e) => updateField('venue', e.target.value)} />
-        </label>
-        <label className="block">
-          <span className="text-sm">Location / Meet Link</span>
-          <input className="input mt-1" value={form.locationLink} onChange={(e) => updateField('locationLink', e.target.value)} />
-        </label>
-        <label className="block">
-          <span className="text-sm">Organizer Name</span>
-          <input className="input mt-1" value={form.organizerName} onChange={(e) => updateField('organizerName', e.target.value)} />
-        </label>
-        <label className="block">
-          <span className="text-sm">Organizer Contact</span>
-          <input className="input mt-1" value={form.organizerContact} onChange={(e) => updateField('organizerContact', e.target.value)} />
-        </label>
-        <label className="block">
-          <span className="text-sm">Require Registration</span>
-          <input type="checkbox" className="ml-2" checked={form.isRegistrationRequired} onChange={(e) => updateField('isRegistrationRequired', e.target.checked)} />
-        </label>
-        <label className="block">
-          <span className="text-sm">Registration Link</span>
-          <input className="input mt-1" value={form.registrationLink} onChange={(e) => updateField('registrationLink', e.target.value)} />
-        </label>
-        <label className="block">
-          <span className="text-sm">Registration Fee</span>
-          <input type="number" min="0" className="input mt-1" value={form.registrationFee} onChange={(e) => updateField('registrationFee', e.target.value)} />
-        </label>
-        <label className="block">
-          <span className="text-sm">Max Participants</span>
-          <input type="number" min="0" className="input mt-1" value={form.maxParticipants} onChange={(e) => updateField('maxParticipants', e.target.value)} />
-        </label>
-        <label className="block">
-          <span className="text-sm">Status</span>
-          <select className="input mt-1" value={form.status} onChange={(e) => updateField('status', e.target.value)}>
-            {['Draft','Published','Completed','Cancelled'].map((s) => <option key={s}>{s}</option>)}
-          </select>
-        </label>
-        <label className="block md:col-span-2">
-          <span className="text-sm">Tags (comma-separated)</span>
-          <input className="input mt-1" value={form.tags} onChange={(e) => updateField('tags', e.target.value)} />
-        </label>
-        <div className="md:col-span-2">
-          <button className="btn btn-primary">Save Changes</button>
-        </div>
-      </form>
-    </div>
+    <View style={styles.container}>
+      <Text style={styles.title}>Edit Event</Text>
+      <TextInput placeholder="Event Title" value={form.title} onChangeText={(t) => updateField('title', t)} style={styles.input} />
+      <TextInput placeholder="Description" multiline value={form.description} onChangeText={(t) => updateField('description', t)} style={[styles.input, { height: 100 }]} />
+      <TextInput placeholder="Category" value={form.eventCategory} onChangeText={(t) => updateField('eventCategory', t)} style={styles.input} />
+      <TextInput placeholder="Type (Online/Offline/Hybrid)" value={form.eventType} onChangeText={(t) => updateField('eventType', t)} style={styles.input} />
+      <TextInput placeholder="Start ISO (YYYY-MM-DDTHH:mm)" value={form.startDate} onChangeText={(t) => updateField('startDate', t)} style={styles.input} />
+      <TextInput placeholder="End ISO" value={form.endDate} onChangeText={(t) => updateField('endDate', t)} style={styles.input} />
+      <TextInput placeholder="Registration Deadline ISO" value={form.registrationDeadline} onChangeText={(t) => updateField('registrationDeadline', t)} style={styles.input} />
+      <TextInput placeholder="Venue" value={form.venue} onChangeText={(t) => updateField('venue', t)} style={styles.input} />
+      <TextInput placeholder="Location / Meet Link" value={form.locationLink} onChangeText={(t) => updateField('locationLink', t)} style={styles.input} />
+      <TextInput placeholder="Organizer Name" value={form.organizerName} onChangeText={(t) => updateField('organizerName', t)} style={styles.input} />
+      <TextInput placeholder="Organizer Contact" value={form.organizerContact} onChangeText={(t) => updateField('organizerContact', t)} style={styles.input} />
+      <TextInput placeholder="Require Registration (true/false)" value={String(form.isRegistrationRequired)} onChangeText={(t) => updateField('isRegistrationRequired', t==='true')} style={styles.input} />
+      <TextInput placeholder="Registration Link" value={form.registrationLink} onChangeText={(t) => updateField('registrationLink', t)} style={styles.input} />
+      <TextInput placeholder="Registration Fee" value={String(form.registrationFee)} onChangeText={(t) => updateField('registrationFee', t)} style={styles.input} />
+      <TextInput placeholder="Max Participants" value={String(form.maxParticipants)} onChangeText={(t) => updateField('maxParticipants', t)} style={styles.input} />
+      <TextInput placeholder="Status" value={form.status} onChangeText={(t) => updateField('status', t)} style={styles.input} />
+      <TextInput placeholder="Tags (comma-separated)" value={form.tags} onChangeText={(t) => updateField('tags', t)} style={styles.input} />
+      <Pressable style={styles.primary} onPress={onSubmit}><Text style={styles.primaryText}>Save Changes</Text></Pressable>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 16 },
+  title: { fontSize: 20, fontWeight: '600', marginBottom: 12 },
+  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16, marginBottom: 10 },
+  primary: { backgroundColor: '#111', paddingVertical: 12, borderRadius: 8, alignItems: 'center' },
+  primaryText: { color: '#fff', fontWeight: '600' }
+});

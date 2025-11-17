@@ -1,12 +1,12 @@
-import { useNavigate } from 'react-router-dom';
-import { db } from '../firebase';
-import { doc, setDoc, deleteDoc, getDoc, collection, getDocs, serverTimestamp, updateDoc, increment, addDoc } from 'firebase/firestore';
-import { useAuth } from '../context/AuthContext.jsx';
 import { useEffect, useState } from 'react';
-import { Heart, MessageCircle, Share2, Bookmark, MoreVertical } from 'lucide-react';
+import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
+import { useRouter } from 'expo-router';
+import { db } from '../firebase';
+import { doc, getDoc, setDoc, deleteDoc, serverTimestamp, updateDoc, increment, addDoc, collection, getDocs } from 'firebase/firestore';
+import { useAuth } from '../context/AuthContext';
 
 export default function EventCard({ event }) {
-  const navigate = useNavigate();
+  const router = useRouter();
   const { user, profile } = useAuth();
   const [likesCount, setLikesCount] = useState(0);
   const [liked, setLiked] = useState(false);
@@ -157,105 +157,52 @@ export default function EventCard({ event }) {
 
   const canManage = profile?.role === 'manager' && user?.uid && (event.createdBy === user.uid);
 
-  const handleDelete = async (e) => {
-    e?.stopPropagation?.();
+  const handleDelete = async () => {
     if (!canManage) return;
-    const ok = confirm('Are you sure you want to delete this post?');
-    if (!ok) return;
-    try {
-      await deleteDoc(doc(db, 'events', event.id));
-      setDeleted(true);
-    } catch (err) {
-      alert(err.message || 'Failed to delete');
-    }
+    Alert.alert('Delete', 'Are you sure you want to delete this post?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete', style: 'destructive', onPress: async () => {
+          try {
+            await deleteDoc(doc(db, 'events', event.id));
+            setDeleted(true);
+          } catch (err) {
+            Alert.alert('Error', err.message || 'Failed to delete');
+          }
+        }
+      }
+    ]);
   };
 
-  const handleEdit = (e) => {
-    e?.stopPropagation?.();
+  const handleEdit = () => {
     if (!canManage) return;
-    navigate(`/manager/events/${event.id}/edit`);
+    router.push(`/manager/events/${event.id}/edit`);
   };
 
   return (
     deleted ? null : (
-    <article
-      className="max-w-md mx-auto border border-gray-200 bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition"
-      onClick={() => navigate(`/events/${event.id}`)}
-    >
-      {/* Header row: organizer left, manager menu right */}
-      <div className="px-4 pt-3 flex items-center justify-between">
-        {(organizerId || organizerName) && (
-          <div className="flex items-center gap-2" onClick={(e) => { e.stopPropagation(); if (organizerId) navigate(`/society/${organizerId}`); }}>
-            {organizerLogo ? (
-              <img src={organizerLogo} alt="Logo" className="w-6 h-6 rounded-full border border-gray-200" />
-            ) : (
-              <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs">🏛️</div>
-            )}
-            <button className="text-sm text-fjwuGreen hover:underline" onClick={(e) => { e.stopPropagation(); if (organizerId) navigate(`/society/${organizerId}`); }}>
-              {organizerName || 'Society'}
-            </button>
-          </div>
-        )}
-        {canManage && (
-          <div className="relative" onClick={(e) => e.stopPropagation()}>
-            <button className="text-gray-700 hover:text-fjwuGreen" onClick={() => setShowManagerMenu((s) => !s)} title="Manage">
-              <MoreVertical className="w-4 h-4" />
-            </button>
-            {showManagerMenu && (
-              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-                <button className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50" onClick={handleEdit}>Edit Post</button>
-                <button className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50" onClick={handleDelete}>Delete Post</button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-      {event.posterURL && (
-        <img src={event.posterURL} alt="Poster" className="w-full object-cover" />
-      )}
-      {/* Interaction bar below image */}
-      <div className="px-4 pt-3">
-        <div className="flex items-center justify-around text-sm w-full">
-          <button className={`flex items-center gap-1 hover:text-fjwuGreen ${liked ? 'text-fjwuGreen' : 'text-gray-700'}`} onClick={(e) => toggleLike(e)} title="Like">
-            <Heart className={`w-4 h-4 ${liked ? 'fill-fjwuGreen text-fjwuGreen' : ''}`} />
-            <span>{likesCount}</span>
-          </button>
-          <button className="text-gray-700 hover:text-fjwuGreen" title="Comment" onClick={(e) => { e.stopPropagation(); navigate(`/events/${event.id}`); }}>
-            <MessageCircle className="w-4 h-4" />
-          </button>
-          <div className="relative">
-            <button className="text-gray-700 hover:text-fjwuGreen" title="Share" onClick={(e) => { e.stopPropagation(); setShowShare((s) => !s); }}>
-              <Share2 className="w-4 h-4" />
-            </button>
-            {showShare && (
-              <div className="absolute z-10 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg" onClick={(e) => e.stopPropagation()}>
-                <button
-                  className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
-                  onClick={() => { navigator.clipboard.writeText(location.origin + `/events/${event.id}`); setShowShare(false); }}
-                >Copy Event Link</button>
-                <button
-                  className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
-                  onClick={() => { if (navigator.share) navigator.share({ title: event.title, url: location.origin + `/events/${event.id}` }); setShowShare(false); }}
-                >Share via…</button>
-              </div>
-            )}
-          </div>
-          <button className={`text-gray-700 hover:text-fjwuGreen ${saved ? 'text-fjwuGreen' : ''}`} title="Save" onClick={(e) => toggleSave(e)}>
-            <Bookmark className={`w-4 h-4 ${saved ? 'fill-fjwuGreen text-fjwuGreen' : ''}`} />
-          </button>
-        </div>
-      </div>
-      {/* Title and description */}
-      <div className="px-4 pb-4">
-        <div className="mt-2">
-          <h3 className="text-base font-semibold text-fjwuGreen">{event.title}</h3>
-          <p className="text-sm text-gray-700 mt-1">{event.description?.slice(0, 160)}{event.description?.length > 160 ? '…' : ''}</p>
-          <div className="text-xs text-gray-500 mt-1">{dateStr}</div>
-          {postedAgo && <div className="text-xs text-gray-500 mt-1">{postedAgo}</div>}
-        </div>
-        {toast && <div className="mt-2 text-sm text-green-700">{toast}</div>}
-      </div>
-    </article>
+      <Pressable onPress={() => router.push(`/events/${event.id}`)} style={styles.card}>
+        <View style={styles.row}>
+          <Text style={styles.title}>{event.title || 'Event'}</Text>
+          <Pressable onPress={() => toggleSave()} style={styles.saveBtn}>
+            <Text style={styles.saveText}>{saved ? 'Saved' : 'Save'}</Text>
+          </Pressable>
+        </View>
+        {!!event.posterURL && <View style={{ height: 8 }} />}
+        {!!event.venue && <Text style={styles.meta}>{event.venue}</Text>}
+        {!!event.dateTime && <Text style={styles.meta}>{dateStr}</Text>}
+        {!!toast && <Text style={styles.toast}>{toast}</Text>}
+      </Pressable>
     )
   );
 }
+
+const styles = StyleSheet.create({
+  card: { borderWidth: 1, borderColor: '#eee', backgroundColor: '#fff', borderRadius: 12, padding: 12 },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  title: { fontSize: 16, fontWeight: '600' },
+  meta: { color: '#555', marginTop: 4 },
+  saveBtn: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8, backgroundColor: '#111' },
+  saveText: { color: '#fff' },
+  toast: { color: '#0a7', marginTop: 6 }
+});

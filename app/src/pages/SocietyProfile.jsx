@@ -1,38 +1,59 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { View, Text, Image, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '../context/AuthContext.jsx';
 import { db } from '../firebase.js';
-import { doc, getDoc, collection, getDocs, query, where, orderBy, updateDoc, increment, setDoc, deleteDoc } from 'firebase/firestore';
-import StudentLayout from '../panels/student/StudentLayout.jsx';
-import ManagerLayout from '../panels/manager/ManagerLayout.jsx';
-import { Heart, MessageCircle, Share2 } from 'lucide-react';
+import { doc, getDoc, collection, getDocs, query, where, updateDoc, increment, setDoc, deleteDoc } from 'firebase/firestore';
+import { Feather } from '@expo/vector-icons';
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  error: { color: '#dc2626' },
+  header: { alignItems: 'center', paddingVertical: 16 },
+  avatar: { width: 112, height: 112, borderRadius: 56, backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  avatarImage: { width: '100%', height: '100%' },
+  avatarEmoji: { fontSize: 40 },
+  title: { fontSize: 22, fontWeight: '600', color: '#0c7d56', marginTop: 12 },
+  description: { fontSize: 14, color: '#111827', marginTop: 6, textAlign: 'center' },
+  meta: { fontSize: 12, color: '#374151', marginTop: 2 },
+  section: { paddingVertical: 12 },
+  sectionTitle: { fontSize: 16, fontWeight: '600', marginBottom: 8 },
+  empty: { fontSize: 14, color: '#6b7280', paddingHorizontal: 4 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4 },
+  card: { width: '33.333%', padding: 4, position: 'relative' },
+  poster: { width: '100%', aspectRatio: 1, borderRadius: 6, backgroundColor: '#e5e7eb' },
+  noImage: { width: '100%', aspectRatio: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#e5e7eb', borderRadius: 6 },
+  noImageText: { color: '#9ca3af' },
+  overlay: { position: 'absolute', left: 4, right: 4, bottom: 8, flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.4)', paddingVertical: 6, borderRadius: 6 },
+  stat: { flexDirection: 'row', alignItems: 'center' },
+  statText: { color: '#fff', fontSize: 12, marginLeft: 4 }
+});
 
 export default function SocietyProfile() {
-  const { uid } = useParams();
-  const navigate = useNavigate();
+  const { uid } = useLocalSearchParams();
+  const router = useRouter();
   const { profile } = useAuth();
-  const isManager = profile?.role === 'manager';
   const [society, setSociety] = useState(null);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [liking, setLiking] = useState(null); // eventId currently toggling like
+  const [liking, setLiking] = useState(null);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       setError(null);
       try {
-        const sSnap = await getDoc(doc(db, 'users', uid));
+        const sSnap = await getDoc(doc(db, 'users', String(uid)));
         if (!sSnap.exists()) {
           setError('Society not found');
         } else {
           setSociety(sSnap.data());
         }
-        const eQ = query(collection(db, 'events'), where('createdBy', '==', uid));
+        const eQ = query(collection(db, 'events'), where('createdBy', '==', String(uid)));
         const eSnap = await getDocs(eQ);
         const base = eSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        // Compute commentsCount for accuracy if not present
         const withCounts = await Promise.all(base.map(async (ev) => {
           try {
             const cSnap = await getDocs(collection(db, 'events', ev.id, 'comments'));
@@ -51,22 +72,10 @@ export default function SocietyProfile() {
     if (uid) load();
   }, [uid]);
 
-  const Wrap = isManager ? ManagerLayout : StudentLayout;
+  if (loading) return <View style={styles.center}><ActivityIndicator /></View>;
+  if (error) return <View style={styles.center}><Text style={styles.error}>{error}</Text></View>;
 
-  if (loading) return (
-    <Wrap>
-      <div className="p-6">Loading society…</div>
-    </Wrap>
-  );
-
-  if (error) return (
-    <Wrap>
-      <div className="p-6 text-red-600">{error}</div>
-    </Wrap>
-  );
-
-  const toggleLike = async (e, ev) => {
-    e?.stopPropagation?.();
+  const toggleLike = async (ev) => {
     if (!profile?.uid) return;
     setLiking(ev.id);
     try {
@@ -86,64 +95,56 @@ export default function SocietyProfile() {
   };
 
   return (
-    <Wrap>
-      <div className="mx-auto max-w-3xl">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
-          <div className="px-6 pt-8 pb-6 text-center bg-fjwuGreen/5 rounded-t-2xl">
-            <div className="mx-auto w-28 h-28 rounded-full ring-4 ring-white shadow-sm overflow-hidden flex items-center justify-center bg-gray-100">
-              {society?.logo || society?.photoURL ? (
-                <img src={society.logo || society.photoURL} alt="Logo" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-4xl">🏛️</span>
-              )}
-            </div>
-            <div className="mt-4 space-y-1">
-              <div className="text-2xl font-semibold text-fjwuGreen">{society?.societyName || society?.organizerName || 'Society'}</div>
-              <div className="text-sm">{society?.description || 'No description'}</div>
-              <div className="text-sm text-gray-700">{society?.category || 'Category'} · {events.length} events conducted</div>
-            </div>
-          </div>
-          <div className="px-2 md:px-6 py-6">
-            <h2 className="text-lg font-semibold mb-3">Events</h2>
-            {!events.length && (
-              <div className="px-4 text-sm text-gray-600">No events yet.</div>
-            )}
-            <div className="grid grid-cols-3 gap-[2px] md:gap-3">
-              {events.map((ev) => (
-                <div
-                  key={ev.id}
-                  className="group relative bg-gray-100 cursor-pointer"
-                  onClick={() => navigate(`/events/${ev.id}`)}
-                >
-                  {ev.posterURL ? (
-                    <img src={ev.posterURL} alt={ev.title || 'Event'} className="w-full aspect-square object-cover" />
-                  ) : (
-                    <div className="w-full aspect-square flex items-center justify-center text-gray-400">No image</div>
-                  )}
-                  <div className="absolute inset-0 hidden group-hover:flex items-center justify-center gap-6 bg-black/40 text-white">
-                    <button
-                      className="flex items-center gap-1 hover:opacity-80"
-                      onClick={(e) => toggleLike(e, ev)}
-                      disabled={liking === ev.id}
-                    >
-                      <Heart className="w-5 h-5" />
-                      <span className="text-sm">{typeof ev.likesCount === 'number' ? ev.likesCount : 0}</span>
-                    </button>
-                    <div className="flex items-center gap-1">
-                      <MessageCircle className="w-5 h-5" />
-                      <span className="text-sm">{typeof ev.commentsCount === 'number' ? ev.commentsCount : 0}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Share2 className="w-5 h-5" />
-                      <span className="text-sm">{typeof ev.sharesCount === 'number' ? ev.sharesCount : 0}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </Wrap>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <View style={styles.avatar}>
+          {society?.logo || society?.photoURL ? (
+            <Image source={{ uri: society.logo || society.photoURL }} style={styles.avatarImage} />
+          ) : (
+            <Text style={styles.avatarEmoji}>🏛️</Text>
+          )}
+        </View>
+        <Text style={styles.title}>{society?.societyName || society?.organizerName || 'Society'}</Text>
+        <Text style={styles.description}>{society?.description || 'No description'}</Text>
+        <Text style={styles.meta}>{society?.category || 'Category'} · {events.length} events conducted</Text>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Events</Text>
+        {!events.length ? (
+          <Text style={styles.empty}>No events yet.</Text>
+        ) : (
+          <View style={styles.grid}>
+            {events.map((ev) => (
+              <TouchableOpacity
+                key={ev.id}
+                style={styles.card}
+                onPress={() => router.push(`/events/${ev.id}`)}
+              >
+                {ev.posterURL ? (
+                  <Image source={{ uri: ev.posterURL }} style={styles.poster} />
+                ) : (
+                  <View style={styles.noImage}><Text style={styles.noImageText}>No image</Text></View>
+                )}
+                <View style={styles.overlay}>
+                  <TouchableOpacity style={styles.stat} onPress={() => toggleLike(ev)} disabled={liking === ev.id}>
+                    <Feather name="heart" size={18} color="#fff" />
+                    <Text style={styles.statText}>{typeof ev.likesCount === 'number' ? ev.likesCount : 0}</Text>
+                  </TouchableOpacity>
+                  <View style={styles.stat}>
+                    <Feather name="message-circle" size={18} color="#fff" />
+                    <Text style={styles.statText}>{typeof ev.commentsCount === 'number' ? ev.commentsCount : 0}</Text>
+                  </View>
+                  <View style={styles.stat}>
+                    <Feather name="share-2" size={18} color="#fff" />
+                    <Text style={styles.statText}>{typeof ev.sharesCount === 'number' ? ev.sharesCount : 0}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </View>
+    </View>
   );
 }

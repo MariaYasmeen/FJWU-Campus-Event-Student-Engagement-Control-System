@@ -1,4 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { View, Text } from 'react-native';
+import { useRouter } from 'expo-router';
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 import Login from "./pages/Login.jsx";
@@ -30,16 +32,17 @@ import ManagerAnnouncements from "./panels/manager/ManagerAnnouncements.jsx";
 // ✅ Fix: RootRedirect must be placed inside AuthProvider
 function RootRedirectWrapper() {
   const { profile, loading } = useAuth();
+  const router = useRouter();
 
-  if (loading) return <div className="p-6 text-center">Loading...</div>;
-  if (!profile) return <Navigate to="/login" replace />;
+  if (loading) return <View style={{ padding: 24 }}><Text>Loading...</Text></View>;
 
-  return (
-    <Navigate
-      to={profile.role === "manager" ? "/manager" : "/student"}
-      replace
-    />
-  );
+  if (!profile) {
+    router.replace('/login');
+    return <View style={{ padding: 24 }}><Text>Redirecting…</Text></View>;
+  }
+
+  router.replace(profile.role === 'manager' ? '/manager' : '/student');
+  return <View style={{ padding: 24 }}><Text>Redirecting…</Text></View>;
 }
 
 export default function App() {

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import ManagerLayout from './ManagerLayout.jsx';
+import { View, Text, Pressable, TextInput, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 import { auth, db } from '../../firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, deleteUser } from 'firebase/auth';
@@ -7,6 +9,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 
 export default function ManagerSettings() {
   const { user } = useAuth();
+  const router = useRouter();
   const [emailNotif, setEmailNotif] = useState(true);
   const [announcementsNotif, setAnnouncementsNotif] = useState(true);
   const [theme, setTheme] = useState('light');
@@ -16,6 +19,7 @@ export default function ManagerSettings() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showPasswordChanged, setShowPasswordChanged] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -25,8 +29,8 @@ export default function ManagerSettings() {
         const data = snap.data() || {};
         setEmailNotif(!!data.emailNotif);
         setAnnouncementsNotif(!!data.announcementsNotif);
-        setTheme(data.theme || (localStorage.getItem('theme') || 'light'));
-        document.documentElement.classList.toggle('dark', (data.theme || localStorage.getItem('theme')) === 'dark');
+        const storedTheme = (await AsyncStorage.getItem('theme')) || 'light';
+        setTheme(data.theme || storedTheme);
       } catch {}
     };
     load();
@@ -43,8 +47,7 @@ export default function ManagerSettings() {
         announcementsNotif,
         theme,
       });
-      localStorage.setItem('theme', theme);
-      document.documentElement.classList.toggle('dark', theme === 'dark');
+      await AsyncStorage.setItem('theme', theme);
       setMessage('Settings saved');
     } catch (e) {
       setError(e.message || 'Failed to save settings');
@@ -53,10 +56,10 @@ export default function ManagerSettings() {
     }
   };
 
-  const handleCancelPrefs = () => {
+  const handleCancelPrefs = async () => {
     setMessage('');
     setError('');
-    const t = localStorage.getItem('theme') || 'light';
+    const t = (await AsyncStorage.getItem('theme')) || 'light';
     setTheme(t);
   };
 
@@ -70,6 +73,7 @@ export default function ManagerSettings() {
       await reauthenticateWithCredential(auth.currentUser, credential);
       await updatePassword(auth.currentUser, newPassword);
       setMessage('Password updated');
+      setShowPasswordChanged(true);
       setCurrentPassword('');
       setNewPassword('');
     } catch (e) {
@@ -87,7 +91,7 @@ export default function ManagerSettings() {
     try {
       await updateDoc(doc(db, 'users', user.uid), { deleted: true });
       await deleteUser(auth.currentUser);
-      window.location.href = '/login';
+      router.replace('/login');
     } catch (e) {
       setError(e.message || 'Failed to delete account');
     } finally {
@@ -97,76 +101,97 @@ export default function ManagerSettings() {
   };
 
   return (
-    <ManagerLayout current={'settings'} onChange={() => {}}>
-      <div className="mx-auto max-w-3xl">
-        <h1 className="text-xl font-semibold mb-3">Settings</h1>
-        {error && <div className="text-sm text-red-600 mb-2">{error}</div>}
-        {message && <div className="text-sm text-green-700 mb-2">{message}</div>}
+    <View style={styles.container}>
+      <Text style={styles.title}>Settings</Text>
+      {!!error && <Text style={styles.error}>{error}</Text>}
+      {!!message && <Text style={styles.success}>{message}</Text>}
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-4">
-          <h2 className="text-lg font-semibold mb-3">Notification Preferences</h2>
-          <label className="flex items-center gap-2 mb-2 text-sm">
-            <input type="checkbox" checked={emailNotif} onChange={() => setEmailNotif((v) => !v)} /> Email notifications
-          </label>
-          <label className="flex items-center gap-2 mb-2 text-sm">
-            <input type="checkbox" checked={announcementsNotif} onChange={() => setAnnouncementsNotif((v) => !v)} /> Announcements alerts
-          </label>
-          <div className="flex gap-2 mt-3">
-            <button className="btn btn-primary" disabled={saving} onClick={handleSavePrefs}>Save</button>
-            <button className="btn btn-secondary" onClick={handleCancelPrefs}>Cancel</button>
-          </div>
-        </div>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Notification Preferences</Text>
+        <Pressable style={styles.row} onPress={() => setEmailNotif((v) => !v)}>
+          <Text>Email notifications</Text>
+          <Text>{emailNotif ? 'On' : 'Off'}</Text>
+        </Pressable>
+        <Pressable style={styles.row} onPress={() => setAnnouncementsNotif((v) => !v)}>
+          <Text>Announcements alerts</Text>
+          <Text>{announcementsNotif ? 'On' : 'Off'}</Text>
+        </Pressable>
+        <View style={styles.actions}>
+          <Pressable style={styles.primary} disabled={saving} onPress={handleSavePrefs}><Text style={styles.primaryText}>Save</Text></Pressable>
+          <Pressable style={styles.secondary} onPress={handleCancelPrefs}><Text>Cancel</Text></Pressable>
+        </View>
+      </View>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-4">
-          <h2 className="text-lg font-semibold mb-3">Theme</h2>
-          <div className="flex items-center gap-3 text-sm">
-            <label className="flex items-center gap-2">
-              <input type="radio" name="theme" checked={theme==='light'} onChange={() => setTheme('light')} /> Light
-            </label>
-            <label className="flex items-center gap-2">
-              <input type="radio" name="theme" checked={theme==='dark'} onChange={() => setTheme('dark')} /> Dark
-            </label>
-          </div>
-          <div className="flex gap-2 mt-3">
-            <button className="btn btn-primary" disabled={saving} onClick={handleSavePrefs}>Save</button>
-            <button className="btn btn-secondary" onClick={handleCancelPrefs}>Cancel</button>
-          </div>
-        </div>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Theme</Text>
+        <View style={styles.row}>
+          <Pressable style={[styles.radio, theme==='light' && styles.radioActive]} onPress={() => setTheme('light')}><Text>Light</Text></Pressable>
+          <Pressable style={[styles.radio, theme==='dark' && styles.radioActive]} onPress={() => setTheme('dark')}><Text>Dark</Text></Pressable>
+        </View>
+        <View style={styles.actions}>
+          <Pressable style={styles.primary} disabled={saving} onPress={handleSavePrefs}><Text style={styles.primaryText}>Save</Text></Pressable>
+          <Pressable style={styles.secondary} onPress={handleCancelPrefs}><Text>Cancel</Text></Pressable>
+        </View>
+      </View>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-4">
-          <h2 className="text-lg font-semibold mb-3">Change Password</h2>
-          <label className="block mb-2 text-sm">
-            <span>Current password</span>
-            <input className="input mt-1" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
-          </label>
-          <label className="block mb-2 text-sm">
-            <span>New password</span>
-            <input className="input mt-1" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-          </label>
-          <div className="flex gap-2 mt-3">
-            <button className="btn btn-primary" disabled={saving || !currentPassword || !newPassword} onClick={handleChangePassword}>Update Password</button>
-            <button className="btn btn-secondary" onClick={() => { setCurrentPassword(''); setNewPassword(''); }}>Cancel</button>
-          </div>
-        </div>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Change Password</Text>
+        <TextInput secureTextEntry placeholder="Current password" value={currentPassword} onChangeText={setCurrentPassword} style={styles.input} />
+        <TextInput secureTextEntry placeholder="New password" value={newPassword} onChangeText={setNewPassword} style={styles.input} />
+        <View style={styles.actions}>
+          <Pressable style={styles.primary} disabled={saving || !currentPassword || !newPassword} onPress={handleChangePassword}><Text style={styles.primaryText}>Update Password</Text></Pressable>
+          <Pressable style={styles.secondary} onPress={() => { setCurrentPassword(''); setNewPassword(''); }}><Text>Cancel</Text></Pressable>
+        </View>
+      </View>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4">
-          <h2 className="text-lg font-semibold mb-3">Delete Account</h2>
-          <p className="text-sm text-gray-700">This action is permanent and cannot be undone.</p>
-          <button className="btn btn-secondary mt-3" onClick={() => setShowConfirm(true)}>Delete Account</button>
-        </div>
-        {showConfirm && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 max-w-sm w-full p-5 text-center">
-              <h3 className="text-lg font-semibold">Delete Account</h3>
-              <p className="text-sm text-gray-700 mt-2">This action is permanent and cannot be undone. Are you sure?</p>
-              <div className="mt-4 flex items-center justify-center gap-2">
-                <button className="btn btn-secondary" onClick={() => setShowConfirm(false)}>Cancel</button>
-                <button className="btn btn-primary" disabled={saving} onClick={confirmDelete}>Yes, Delete</button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </ManagerLayout>
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Delete Account</Text>
+        <Text>This action is permanent and cannot be undone.</Text>
+        <Pressable style={styles.secondary} onPress={() => setShowConfirm(true)}><Text>Delete Account</Text></Pressable>
+      </View>
+
+      {showConfirm && (
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modal}>
+            <Text style={styles.cardTitle}>Delete Account</Text>
+            <Text style={{ marginTop: 8 }}>This action is permanent and cannot be undone. Are you sure?</Text>
+            <View style={styles.actions}>
+              <Pressable style={styles.secondary} onPress={() => setShowConfirm(false)}><Text>Cancel</Text></Pressable>
+              <Pressable style={styles.primary} disabled={saving} onPress={confirmDelete}><Text style={styles.primaryText}>Yes, Delete</Text></Pressable>
+            </View>
+          </View>
+        </View>
+      )}
+
+      {showPasswordChanged && (
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modal}>
+            <Text style={styles.cardTitle}>Password changed successfully</Text>
+            <View style={styles.actions}>
+              <Pressable style={styles.primary} onPress={() => setShowPasswordChanged(false)}><Text style={styles.primaryText}>OK</Text></Pressable>
+            </View>
+          </View>
+        </View>
+      )}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 16 },
+  title: { fontSize: 20, fontWeight: '600', marginBottom: 8 },
+  error: { color: '#dc2626', marginBottom: 8 },
+  success: { color: '#0a7', marginBottom: 8 },
+  card: { borderWidth: 1, borderColor: '#eee', borderRadius: 12, padding: 12, marginBottom: 12, backgroundColor: '#fff' },
+  cardTitle: { fontSize: 16, fontWeight: '600' },
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 8 },
+  actions: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  primary: { backgroundColor: '#111', paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8 },
+  primaryText: { color: '#fff' },
+  secondary: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12, alignSelf: 'flex-start', marginTop: 8 },
+  radio: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12 },
+  radioActive: { backgroundColor: '#e5e7eb' },
+  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16, marginTop: 8 },
+  modalBackdrop: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' },
+  modal: { backgroundColor: '#fff', borderRadius: 12, padding: 16, width: '80%' }
+});

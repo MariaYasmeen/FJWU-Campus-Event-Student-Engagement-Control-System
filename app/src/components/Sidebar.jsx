@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
 
 export default function Sidebar({ role = 'student', managerProfileComplete = true }) {
   const studentLinks = [
@@ -27,25 +28,24 @@ export default function Sidebar({ role = 'student', managerProfileComplete = tru
 
   const links = role === 'manager' ? managerLinks : studentLinks;
 
+  const router = useRouter();
   return (
-    <aside className="fixed top-14 left-0 bottom-0 w-64 border-r border-gray-200 bg-white overflow-y-auto">
-      <div className="p-4">
-        <ul className="space-y-2">
-          {links.map((l) => (
-            <li key={l.to}>
-              <Link
-                to={l.to}
-                className="block w-full px-3 py-2 rounded-md hover:bg-gray-50"
-              >
-                {l.label}
-                {l.to === '/manager/profile' && role === 'manager' && !managerProfileComplete && (
-                  <span className="ml-2 text-xs text-red-600">(complete)</span>
-                )}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </aside>
+    <View style={styles.container}>
+      {links.map((l) => (
+        <Pressable key={l.to} style={styles.item} onPress={() => router.push(l.to)}>
+          <Text style={styles.itemText}>{l.label}</Text>
+          {l.to === '/manager/profile' && role === 'manager' && !managerProfileComplete && (
+            <Text style={styles.warn}>(complete)</Text>
+          )}
+        </Pressable>
+      ))}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { width: 240, borderRightWidth: 1, borderColor: '#eee', backgroundColor: '#fff', padding: 12 },
+  item: { paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8 },
+  itemText: { color: '#111' },
+  warn: { color: '#dc2626', fontSize: 12, marginLeft: 6 }
+});

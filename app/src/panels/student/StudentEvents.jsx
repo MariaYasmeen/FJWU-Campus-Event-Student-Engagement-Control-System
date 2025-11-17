@@ -1,29 +1,25 @@
-import StudentLayout from './StudentLayout.jsx';
-import EventFeed from '../../components/EventFeed.jsx';
 import { useState } from 'react';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import EventFeed from '../../components/EventFeed.jsx';
 
 export default function StudentEvents() {
-  const [search, setSearch] = useState('');
-  const [tab, setTab] = useState('upcoming'); // 'upcoming' | 'past'
+  const [tab, setTab] = useState('upcoming');
   return (
-    <StudentLayout>
-      <div className="flex items-center justify-between mb-3">
-        </div>
-      <div className="mb-4 flex items-center gap-2">
-        <button
-          className={`px-3 py-1 border rounded-none ${tab==='upcoming'?'bg-fjwuGreen text-white border-fjwuGreen':'bg-white text-gray-700 border-gray-300'}`}
-          onClick={() => setTab('upcoming')}
-        >
-          Upcoming Events
-        </button>
-        <button
-          className={`px-3 py-1 border rounded-none ${tab==='past'?'bg-fjwuGreen text-white border-fjwuGreen':'bg-white text-gray-700 border-gray-300'}`}
-          onClick={() => setTab('past')}
-        >
-          Past Events
-        </button>
-      </div>
-      <EventFeed filter={tab==='upcoming' ? 'student_upcoming' : 'student_past'} search={search} />
-    </StudentLayout>
+    <View style={styles.container}>
+      <View style={styles.row}>
+        <Pressable style={[styles.tab, tab==='upcoming' && styles.tabActive]} onPress={() => setTab('upcoming')}><Text style={[styles.tabText, tab==='upcoming' && styles.tabTextActive]}>Upcoming Events</Text></Pressable>
+        <Pressable style={[styles.tab, tab==='past' && styles.tabActive]} onPress={() => setTab('past')}><Text style={[styles.tabText, tab==='past' && styles.tabTextActive]}>Past Events</Text></Pressable>
+      </View>
+      <EventFeed filter={tab==='upcoming' ? 'student_upcoming' : 'student_past'} />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 16 },
+  row: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  tab: { borderWidth: 1, borderColor: '#ddd', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8 },
+  tabActive: { backgroundColor: '#0a7', borderColor: '#0a7' },
+  tabText: { color: '#222' },
+  tabTextActive: { color: '#fff', fontWeight: '600' }
+});

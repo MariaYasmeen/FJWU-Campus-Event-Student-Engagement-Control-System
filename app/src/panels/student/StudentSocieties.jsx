@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
+import { View, Text, Pressable, StyleSheet, Image } from 'react-native';
+import { useRouter } from 'expo-router';
 import { db } from '../../firebase';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
-import StudentLayout from './StudentLayout.jsx';
-import { useNavigate } from 'react-router-dom';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 
 export default function StudentSocieties() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  const router = useRouter();
 
   useEffect(() => {
     const load = async () => {
@@ -29,41 +29,42 @@ export default function StudentSocieties() {
   }, []);
 
   return (
-    <StudentLayout>
-      <div className="mx-auto max-w-4xl">
-        <h1 className="text-xl font-semibold mb-3">All Societies</h1>
-        {error && <div className="text-sm text-red-600 mb-2">{error}</div>}
-        {loading ? (
-          <div>Loading societies…</div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {items.map((s) => (
-              <button
-                key={s.id}
-                className="bg-white border border-gray-200 rounded-xl p-4 text-center hover:shadow-sm"
-                onClick={() => navigate(`/society/${s.id}`)}
-              >
-                <div className="mx-auto w-24 h-24 rounded-full ring-4 ring-white shadow-sm overflow-hidden flex items-center justify-center bg-gray-100">
-                  {s.logo ? (
-                    <img src={s.logo} alt={s.societyName || s.organizerName || s.name || 'Society'} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-3xl">🏛️</span>
-                  )}
-                </div>
-                <div className="mt-3 text-fjwuGreen font-medium">
-                  {s.societyName || s.organizerName || s.name || 'Unnamed Society'}
-                </div>
-                <div className="mt-1 text-xs text-gray-600 line-clamp-2">
-                  {s.description || 'No description provided.'}
-                </div>
-              </button>
-            ))}
-            {!items.length && (
-              <div className="text-sm text-gray-600">No societies found.</div>
-            )}
-          </div>
-        )}
-      </div>
-    </StudentLayout>
+    <View style={styles.container}>
+      <Text style={styles.title}>All Societies</Text>
+      {!!error && <Text style={styles.error}>{error}</Text>}
+      {loading ? (
+        <Text>Loading societies…</Text>
+      ) : (
+        <View style={styles.grid}>
+          {items.map((s) => (
+            <Pressable key={s.id} style={styles.card} onPress={() => router.push(`/society/${s.id}`)}>
+              {s.logo ? (
+                <Image source={{ uri: s.logo }} style={styles.avatar} />
+              ) : (
+                <View style={[styles.avatar, styles.avatarPlaceholder]}><Text>🏛️</Text></View>
+              )}
+              <Text style={styles.name}>{s.societyName || s.organizerName || s.name || 'Unnamed Society'}</Text>
+              <Text style={styles.desc}>{s.description || 'No description provided.'}</Text>
+            </Pressable>
+          ))}
+          {!items.length && (
+            <Text style={styles.muted}>No societies found.</Text>
+          )}
+        </View>
+      )}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 16 },
+  title: { fontSize: 18, fontWeight: '600', marginBottom: 8 },
+  error: { color: '#dc2626', marginBottom: 8 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -6 },
+  card: { width: '50%', padding: 6, alignItems: 'center' },
+  avatar: { width: 96, height: 96, borderRadius: 48 },
+  avatarPlaceholder: { backgroundColor: '#eee', alignItems: 'center', justifyContent: 'center' },
+  name: { color: '#0a7', fontWeight: '600', marginTop: 8 },
+  desc: { color: '#6b7280', fontSize: 12, textAlign: 'center', marginTop: 4 },
+  muted: { color: '#6b7280' }
+});

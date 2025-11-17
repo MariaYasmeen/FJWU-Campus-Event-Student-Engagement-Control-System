@@ -89,10 +89,7 @@ export function AuthProvider({ children }) {
       profileComplete: role === 'manager' ? false : true,
     });
 
-    const actionCodeSettings = {
-      url: `${window.location.origin}/login`,
-    };
-    await sendEmailVerification(cred.user, actionCodeSettings);
+    try { await sendEmailVerification(cred.user); } catch (e) {}
     await signOut(auth);
     setMessage('Verification email sent. Please verify before logging in.');
     return true;
@@ -103,12 +100,7 @@ export function AuthProvider({ children }) {
     const cred = await signInWithEmailAndPassword(auth, email, password);
     // Enforce verification
     if (!cred.user.emailVerified) {
-      try {
-        const actionCodeSettings = { url: `${window.location.origin}/login` };
-        await sendEmailVerification(cred.user, actionCodeSettings);
-      } catch (e) {
-        console.error('Failed to send verification email on login', e);
-      }
+      try { await sendEmailVerification(cred.user); } catch (e) {}
       await signOut(auth);
       throw new Error(`Verification email resent to ${email}. Please check inbox or spam.`);
     }

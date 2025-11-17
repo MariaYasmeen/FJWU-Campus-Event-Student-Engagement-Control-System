@@ -1,4 +1,5 @@
 import React from 'react';
+import { View, Text, StyleSheet, Pressable, Linking } from 'react-native';
 
 export default function PostDescription({ event }) {
   const dateStr = event?.dateTime
@@ -8,55 +9,59 @@ export default function PostDescription({ event }) {
       : (event?.eventDate ? new Date(event.eventDate).toLocaleString() : ''));
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-semibold text-fjwuGreen">{event?.title}</h1>
-      <p className="text-gray-700 mt-2">{event?.description}</p>
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-        <div><span className="font-medium">Category:</span> {event?.eventCategory}</div>
-        <div><span className="font-medium">Type:</span> {event?.eventType}</div>
-        <div><span className="font-medium">Venue:</span> {event?.venue}</div>
-        <div><span className="font-medium">Campus:</span> {event?.campus}</div>
-        <div><span className="font-medium">Date & Time:</span> {dateStr}</div>
-        {event?.brochureLink && (
-          <div>
-            <span className="font-medium">Brochure:</span> <a className="underline text-fjwuGreen" href={event.brochureLink} target="_blank" rel="noreferrer">Open</a>
-          </div>
+    <View style={styles.container}>
+      <Text style={styles.title}>{event?.title}</Text>
+      <Text style={styles.text}>{event?.description}</Text>
+      <View style={styles.grid}>
+        <Text style={styles.item}><Text style={styles.label}>Category: </Text>{event?.eventCategory}</Text>
+        <Text style={styles.item}><Text style={styles.label}>Type: </Text>{event?.eventType}</Text>
+        <Text style={styles.item}><Text style={styles.label}>Venue: </Text>{event?.venue}</Text>
+        <Text style={styles.item}><Text style={styles.label}>Campus: </Text>{event?.campus}</Text>
+        <Text style={styles.item}><Text style={styles.label}>Date & Time: </Text>{dateStr}</Text>
+        {!!event?.brochureLink && (
+          <Pressable onPress={() => Linking.openURL(event.brochureLink)}><Text style={styles.link}>Open Brochure</Text></Pressable>
         )}
-      </div>
-      {/* Registration and fee details */}
-      <div className="mt-4 text-sm">
+      </View>
+      <View style={{ marginTop: 12 }}>
         {event?.isOpenEvent ? (
-          <div className="text-gray-700">This event is free and open to everyone. No registration required.</div>
+          <Text style={styles.text}>This event is free and open to everyone. No registration required.</Text>
         ) : (
-          <>
+          <View>
             {event?.isRegistrationRequired ? (
-              <div className="space-y-1">
-                <div className="text-gray-700">Registration Required</div>
-                {event?.registrationLink && (
-                  <div>
-                    <span className="font-medium">Registration Link:</span>{' '}
-                    <a className="underline text-fjwuGreen" href={event.registrationLink} target="_blank" rel="noreferrer">Open</a>
-                  </div>
+              <View>
+                <Text style={styles.text}>Registration Required</Text>
+                {!!event?.registrationLink && (
+                  <Pressable onPress={() => Linking.openURL(event.registrationLink)}><Text style={styles.link}>Open Registration Link</Text></Pressable>
                 )}
                 {Number(event?.registrationFee || 0) > 0 ? (
-                  <div><span className="font-medium">Registration Fee:</span> {Number(event.registrationFee)} </div>
+                  <Text style={styles.text}><Text style={styles.label}>Registration Fee: </Text>{Number(event.registrationFee)}</Text>
                 ) : (
-                  <div className="text-gray-700">This event is free.</div>
+                  <Text style={styles.text}>This event is free.</Text>
                 )}
-              </div>
+              </View>
             ) : (
-              <div className="space-y-1">
-                <div className="text-gray-700">No registration required.</div>
+              <View>
+                <Text style={styles.text}>No registration required.</Text>
                 {Number(event?.registrationFee || 0) > 0 ? (
-                  <div><span className="font-medium">Event Fee:</span> {Number(event.registrationFee)}</div>
+                  <Text style={styles.text}><Text style={styles.label}>Event Fee: </Text>{Number(event.registrationFee)}</Text>
                 ) : (
-                  <div className="text-gray-700">This event is free.</div>
+                  <Text style={styles.text}>This event is free.</Text>
                 )}
-              </div>
+              </View>
             )}
-          </>
+          </View>
         )}
-      </div>
-    </div>
+      </View>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { padding: 16 },
+  title: { fontSize: 22, fontWeight: '600', color: '#0a7' },
+  text: { color: '#374151', marginTop: 6 },
+  grid: { marginTop: 12, gap: 6 },
+  item: { color: '#374151' },
+  label: { fontWeight: '600' },
+  link: { color: '#0a7', textDecorationLine: 'underline' }
+});

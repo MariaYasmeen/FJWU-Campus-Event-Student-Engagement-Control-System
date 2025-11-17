@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { db } from '../../firebase';
 import { collection, getDocs, orderBy, query, doc, deleteDoc } from 'firebase/firestore';
-import { useNavigate } from 'react-router-dom';
-import ManagerLayout from './ManagerLayout.jsx';
 
 export default function YourEvents() {
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const router = useRouter();
   const [rows, setRows] = useState([]);
   const [filter, setFilter] = useState('all'); // all | upcoming | past | drafts
   const [loading, setLoading] = useState(true);
@@ -31,80 +31,76 @@ export default function YourEvents() {
   }, [user, filter]);
 
   const onDelete = async (id) => {
-    if (!confirm('Delete this event? This cannot be undone.')) return;
     await deleteDoc(doc(db, 'events', id));
     setRows((r) => r.filter((x) => x.id !== id));
   };
 
   return (
-    <ManagerLayout current={'manager_events'} onChange={() => {}}>
-      <div>
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-xl font-semibold">Your Events</h1>
-        <button className="btn btn-primary" onClick={() => navigate('/manager/create-event')}>Create Event</button>
-      </div>
-      <div className="flex gap-2 mb-3">
+    <View style={styles.container}>
+      <View style={styles.rowBetween}>
+        <Text style={styles.title}>Your Events</Text>
+        <Pressable style={styles.primary} onPress={() => router.push('/manager/create-event')}><Text style={styles.primaryText}>Create Event</Text></Pressable>
+      </View>
+      <View style={styles.row}>
         {['all','upcoming','past','drafts'].map((k) => (
-          <button key={k} className={`btn ${filter===k?'btn-primary':'btn-secondary'}`} onClick={() => setFilter(k)}>{k[0].toUpperCase()+k.slice(1)}</button>
+          <Pressable key={k} style={[styles.chip, filter===k && styles.chipActive]} onPress={() => setFilter(k)}><Text style={[styles.chipText, filter===k && styles.chipTextActive]}>{k[0].toUpperCase()+k.slice(1)}</Text></Pressable>
         ))}
-      </div>
+      </View>
       {loading ? (
-        <div>Loading...</div>
+        <Text>Loading...</Text>
       ) : (
-        <div className="card overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="text-left">
-                <th className="px-4 py-2">Title</th>
-                <th className="px-4 py-2">Date</th>
-                <th className="px-4 py-2">Status</th>
-                <th className="px-4 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((e) => (
-                <tr key={e.id} className="border-t">
-                  <td className="px-4 py-2">{e.title}</td>
-                  <td className="px-4 py-2">{e.startDate?.seconds ? new Date(e.startDate.seconds*1000).toLocaleString() : e.dateTime}</td>
-                  <td className="px-4 py-2">{e.status || 'Published'}</td>
-                  <td className="px-4 py-2 relative">
-                    <KebabMenu
-                      onView={() => navigate(`/events/${e.id}`)}
-                      onEdit={() => navigate(`/manager/events/${e.id}/edit`)}
-                      onDelete={() => onDelete(e.id)}
-                    />
-                  </td>
-              </tr>
-            ))}
-            </tbody>
-          </table>
-        </div>
+        <View style={styles.list}>
+          {rows.map((e) => (
+            <View key={e.id} style={styles.item}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontWeight: '600' }}>{e.title}</Text>
+                <Text style={styles.meta}>{e.startDate?.seconds ? new Date(e.startDate.seconds*1000).toLocaleString() : e.dateTime}</Text>
+                <Text style={styles.meta}>{e.status || 'Published'}</Text>
+              </View>
+              <KebabMenu
+                onView={() => router.push(`/events/${e.id}`)}
+                onEdit={() => router.push(`/manager/events/${e.id}/edit`)}
+                onDelete={() => onDelete(e.id)}
+              />
+            </View>
+          ))}
+        </View>
       )}
-      </div>
-    </ManagerLayout>
+    </View>
   );
 }
 
 function KebabMenu({ onView, onEdit, onDelete }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="inline-block text-left">
-      <button
-        className="w-8 h-8 inline-flex items-center justify-center rounded-full hover:bg-gray-100 transition"
-        onClick={() => setOpen((v) => !v)}
-        aria-label="Actions"
-      >
-        ⋮
-      </button>
+    <View>
+      <Pressable style={styles.kebab} onPress={() => setOpen((v) => !v)} accessibilityLabel="Actions"><Text>⋮</Text></Pressable>
       {open && (
-        <div className="absolute right-4 mt-2 w-36 origin-top-right rounded-xl bg-white shadow-md border border-gray-200 transition-all">
-          <div className="py-2 text-sm">
-            <button className="block w-full text-left px-3 py-2 hover:bg-gray-50" onClick={() => { setOpen(false); onView(); }}>View</button>
-            <button className="block w-full text-left px-3 py-2 hover:bg-gray-50" onClick={() => { setOpen(false); onEdit(); }}>Edit</button>
-            <button className="block w-full text-left px-3 py-2 hover:bg-gray-50 text-red-600" onClick={() => { setOpen(false); onDelete(); }}>Delete</button>
-          </div>
-        </div>
+        <View style={styles.menu}>
+          <Pressable style={styles.menuItem} onPress={() => { setOpen(false); onView(); }}><Text>View</Text></Pressable>
+          <Pressable style={styles.menuItem} onPress={() => { setOpen(false); onEdit(); }}><Text>Edit</Text></Pressable>
+          <Pressable style={styles.menuItem} onPress={() => { setOpen(false); onDelete(); }}><Text style={{ color: '#dc2626' }}>Delete</Text></Pressable>
+        </View>
       )}
-    </div>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 16 },
+  rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
+  row: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  title: { fontSize: 18, fontWeight: '600' },
+  primary: { backgroundColor: '#111', paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8 },
+  primaryText: { color: '#fff' },
+  chip: { borderWidth: 1, borderColor: '#ddd', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
+  chipActive: { backgroundColor: '#0a7', borderColor: '#0a7' },
+  chipText: { color: '#111' },
+  chipTextActive: { color: '#fff' },
+  list: { gap: 8 },
+  item: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderColor: '#eee', borderRadius: 8, padding: 10 },
+  meta: { color: '#555' },
+  kebab: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: 16, borderWidth: 1, borderColor: '#eee' },
+  menu: { position: 'absolute', right: 0, top: 36, width: 160, borderWidth: 1, borderColor: '#eee', borderRadius: 12, backgroundColor: '#fff', paddingVertical: 8 },
+  menuItem: { paddingVertical: 8, paddingHorizontal: 12 }
+});

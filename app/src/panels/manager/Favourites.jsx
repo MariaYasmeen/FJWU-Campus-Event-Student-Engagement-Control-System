@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { db } from '../../firebase';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
-import ManagerLayout from './ManagerLayout.jsx';
+import { collection, getDocs, query } from 'firebase/firestore';
 import EventCard from '../../components/EventCard.jsx';
 
 export default function Favourites() {
@@ -37,24 +37,26 @@ export default function Favourites() {
   }, [user]);
 
   return (
-    <ManagerLayout current={'favorites'} onChange={() => {}}>
-      <div className="mx-auto max-w-3xl">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-semibold">Saved Posts</h1>
-        </div>
-        {loading ? (
-          <div>Loading...</div>
-        ) : (
-          <div className="space-y-4">
-            {items.map((e) => (
-              <EventCard key={e.id} event={e} />
-            ))}
-            {!items.length && (
-              <div className="text-sm text-gray-600">No saved posts yet.</div>
-            )}
-          </div>
-        )}
-      </div>
-    </ManagerLayout>
+    <View style={styles.container}>
+      <Text style={styles.title}>Saved Posts</Text>
+      {loading ? (
+        <Text>Loading...</Text>
+      ) : (
+        <View style={{ gap: 8 }}>
+          {items.map((e) => (
+            <EventCard key={e.id} event={e} />
+          ))}
+          {!items.length && (
+            <Text style={styles.muted}>No saved posts yet.</Text>
+          )}
+        </View>
+      )}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 16 },
+  title: { fontSize: 18, fontWeight: '600', marginBottom: 8 },
+  muted: { color: '#6b7280' }
+});

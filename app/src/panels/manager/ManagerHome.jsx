@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
-import ManagerLayout from './ManagerLayout.jsx';
+import { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Pressable, Alert } from 'react-native';
 import EventFeed from '../../components/EventFeed.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'expo-router';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '../../firebase';
 
@@ -10,7 +10,7 @@ export default function ManagerHome() {
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const { user, profile } = useAuth();
-  const navigate = useNavigate();
+  const router = useRouter();
   const [stats, setStats] = useState({ totalEvents: 0, upcomingEvents: 0, totalRsvps: 0 });
   const [recent, setRecent] = useState([]);
 
@@ -43,101 +43,49 @@ export default function ManagerHome() {
   }, [user]);
 
   const handleSidebarChange = (key) => {
-    if (key === 'manager_profile') return navigate('/manager/profile');
+    if (key === 'manager_profile') return router.push('/manager/profile');
     if (key === 'create_event') {
       if (!profile?.profileComplete) {
-        alert('Please create your society profile before creating events.');
+        Alert.alert('Profile Required', 'Please create your society profile before creating events.');
         return;
       }
-      return navigate('/manager/create-event');
+      return router.push('/manager/create-event');
     }
     if (key === 'manager_events') return setFilter('manager_events');
-    if (key === 'analytics') return navigate('/manager/analytics');
-    if (key === 'announcements') return navigate('/manager/announcements');
-    if (key === 'settings') return navigate('/manager/settings');
+    if (key === 'analytics') return router.push('/manager/analytics');
+    if (key === 'announcements') return router.push('/manager/announcements');
+    if (key === 'settings') return router.push('/manager/settings');
     setFilter(key);
   };
 
   return (
-    <ManagerLayout
-      current={filter}
-      onChange={(key) => {
-        if (typeof key === 'string' && key.startsWith('search:')) {
-          return setSearch(key.replace('search:', ''));
-        }
-        handleSidebarChange(key);
-      }}
-    >
-      <div className="flex items-center justify-between">
-        {!profile?.profileComplete ? (
-          <button className="btn btn-primary" onClick={() => navigate('/manager/profile')}>Start Creating Your Society Profile</button>
-        ) : (
-          <div />
-        )}
-        <div className="flex items-center gap-3">
-          <button
-            className="btn btn-primary"
-            disabled={!profile?.profileComplete}
-            title={!profile?.profileComplete ? 'Please create your society profile before creating events.' : ''}
-            onClick={() => navigate('/manager/create-event')}
-          >
-            Create New Event
-          </button>
-          {!profile?.profileComplete && (
-            <div className="text-sm text-gray-600">Please create your society profile before creating events.</div>
-          )}
-        </div>
-      </div>
-      <div>
-          {/* Dashboard Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="card p-4">
-              <div className="text-sm text-gray-500">Total Events Created</div>
-              <div className="mt-1 text-2xl font-semibold text-fjwuGreen">{stats.totalEvents}</div>
-            </div>
-            <div className="card p-4">
-              <div className="text-sm text-gray-500">Upcoming Events</div>
-              <div className="mt-1 text-2xl font-semibold text-fjwuGreen">{stats.upcomingEvents}</div>
-            </div>
-            <div className="card p-4">
-              <div className="text-sm text-gray-500">Total RSVPs</div>
-              <div className="mt-1 text-2xl font-semibold text-fjwuGreen">{stats.totalRsvps}</div>
-            </div>
-          </div>
-
-          <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="card p-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Recent Activity</h3>
-                <button className="btn btn-secondary" onClick={() => setFilter('manager_events')}>View All</button>
-              </div>
-              <ul className="mt-3 space-y-2">
-                {recent.map((e) => (
-                  <li key={e.id} className="flex items-center justify-between">
-                    <div>
-                      <div className="font-medium">{e.title}</div>
-                      <div className="text-xs text-gray-600">{e.status || 'Published'} · {new Date(e.createdAt?.seconds ? e.createdAt.seconds * 1000 : Date.parse(e.createdAt || e.dateTime || Date.now())).toLocaleString()}</div>
-                    </div>
-                    <button className="btn btn-secondary" onClick={() => navigate(`/events/${e.id}`)}>Open</button>
-                  </li>
-                ))}
-                {!recent.length && <li className="text-sm text-gray-600">No recent events</li>}
-              </ul>
-            </div>
-            <div className="card p-4">
-              <h3 className="text-lg font-semibold">Notifications</h3>
-              <ul className="mt-3 space-y-2 text-sm text-gray-700">
-                <li>New RSVPs and comments will appear here.</li>
-                <li className="text-gray-500">(Coming soon: per-event updates)</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="mt-8">
-            <h3 className="text-lg font-semibold mb-3">Your Events</h3>
-            <EventFeed filter={'manager_events'} search={search} />
-          </div>
-      </div>
-    </ManagerLayout>
+    <View style={styles.container}>
+      {!profile?.profileComplete ? (
+        <Pressable style={styles.primary} onPress={() => router.push('/manager/profile')}><Text style={styles.primaryText}>Start Creating Your Society Profile</Text></Pressable>
+      ) : null}
+      <View style={styles.row}>
+        <Pressable style={styles.primary} disabled={!profile?.profileComplete} onPress={() => router.push('/manager/create-event')}>
+          <Text style={styles.primaryText}>Create New Event</Text>
+        </Pressable>
+      </View>
+      <View style={styles.statsRow}>
+        <View style={styles.card}><Text>Total Events</Text><Text style={styles.stat}>{stats.totalEvents}</Text></View>
+        <View style={styles.card}><Text>Upcoming</Text><Text style={styles.stat}>{stats.upcomingEvents}</Text></View>
+        <View style={styles.card}><Text>Total RSVPs</Text><Text style={styles.stat}>{stats.totalRsvps}</Text></View>
+      </View>
+      <Text style={styles.sectionTitle}>Your Events</Text>
+      <EventFeed filter={'manager_events'} />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 16 },
+  row: { flexDirection: 'row', justifyContent: 'flex-end', marginVertical: 8 },
+  primary: { backgroundColor: '#0a7', paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8 },
+  primaryText: { color: '#fff', fontWeight: '600' },
+  statsRow: { flexDirection: 'row', gap: 8, marginVertical: 12 },
+  card: { flex: 1, borderWidth: 1, borderColor: '#eee', backgroundColor: '#fff', borderRadius: 12, padding: 12 },
+  stat: { fontSize: 22, fontWeight: '700', color: '#0a7' },
+  sectionTitle: { fontSize: 18, fontWeight: '600', marginVertical: 8 }
+});

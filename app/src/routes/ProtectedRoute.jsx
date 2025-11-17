@@ -1,9 +1,14 @@
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { View, Text } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
-  if (loading) return <div className="p-6 text-center">Loading...</div>;
-  if (!user) return <Navigate to="/login" replace />;
+  const router = useRouter();
+  if (loading) return <View><Text>Loading...</Text></View>;
+  if (!user) {
+    router.replace('/login');
+    return <View><Text>Redirecting…</Text></View>;
+  }
   return children;
 }

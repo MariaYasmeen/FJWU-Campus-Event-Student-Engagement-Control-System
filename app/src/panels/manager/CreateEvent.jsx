@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
+import { View, Text, TextInput, Pressable, StyleSheet, Image } from 'react-native';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { db } from '../../firebase';
 import { addDoc, collection, serverTimestamp, doc, updateDoc, getDoc } from 'firebase/firestore';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { uploadFile } from '../../utils/storage';
 import ManagerLayout from './ManagerLayout.jsx';
 
 export default function CreateEvent() {
   const { user, profile } = useAuth();
-  const { id } = useParams();
+  const { id } = useLocalSearchParams();
   const isEdit = !!id;
   const [step, setStep] = useState(1);
   const [title, setTitle] = useState('');
@@ -43,7 +44,7 @@ export default function CreateEvent() {
   const [visibility, setVisibility] = useState('public');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const router = useRouter();
 
   // Auto-calculate duration when start/end provided
   useEffect(() => {
@@ -58,8 +59,7 @@ export default function CreateEvent() {
     }
   }, [startTime, endTime]);
 
-  const onSubmit = async (e) => {
-    e.preventDefault();
+  const onSubmit = async () => {
     setLoading(true);
     setError(null);
     try {
@@ -88,7 +88,7 @@ export default function CreateEvent() {
       }
       if (isEdit) {
         // Update existing event
-        const ref = doc(db, 'events', id);
+        const ref = doc(db, 'events', String(id));
         const snap = await getDoc(ref);
         if (!snap.exists()) throw new Error('Event not found');
         const data = snap.data();
@@ -130,7 +130,7 @@ export default function CreateEvent() {
           dateTime,
           updatedAt: serverTimestamp(),
         });
-        navigate(`/events/${id}`);
+        router.replace(`/events/${id}`);
       } else {
         const finalIsRegistrationRequired = isOpenEvent ? false : isRegistrationRequired;
         const finalRegistrationFee = isOpenEvent ? 0 : Number(registrationFee || 0);
@@ -176,7 +176,7 @@ export default function CreateEvent() {
           dateTime,
           approvalStatus: 'pending',
         });
-        navigate(`/events/${docRef.id}`);
+        router.replace(`/events/${docRef.id}`);
       }
     } catch (err) {
       setError(err.message || 'Failed to create event');
@@ -233,234 +233,107 @@ export default function CreateEvent() {
   }, [isEdit, id, user]);
 
   return (
-    <ManagerLayout current={'create_event'} onChange={() => {}}>
-          {!profile?.profileComplete && profile?.role === 'manager' ? (
-            <div className="max-w-3xl mx-auto">
-              <div className="border border-gray-200 p-6 rounded-none shadow-none">
-                <h1 className="text-xl font-semibold text-fjwuGreen">{isEdit ? 'Edit Event' : 'Create Event'}</h1>
-                <p className="mt-2 text-gray-700">
-                  Please create your society profile before creating events.
-                </p>
-                <div className="mt-4">
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => navigate('/manager/profile')}
-                  >
-                    Go to Society Profile
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="max-w-3xl mx-auto">
-              <div className="border border-gray-200 p-6 rounded-none shadow-none">
-                <div className="flex items-center justify-between mb-4">
-                  <h1 className="text-xl font-semibold text-fjwuGreen">{isEdit ? 'Edit Event' : 'Create Event'}</h1>
-                  {isEdit && step === 3 && (
-                    <button className="btn btn-primary" onClick={(e) => onSubmit(e)} disabled={loading}>
-                      {loading ? 'Saving...' : 'Save Changes'}
-                    </button>
-                  )}
-                </div>
-                {/* Stepper */}
-                <div className="mb-4 flex items-center justify-center gap-3 text-sm">
-                  {[1,2,3].map((s) => (
-                    <button key={s} className={`px-3 py-1 rounded-full border ${step===s?'bg-fjwuGreen text-white border-fjwuGreen':'bg-white text-gray-700 border-gray-300'}`} onClick={() => setStep(s)}>
-                      Step {s}
-                    </button>
-                  ))}
-                </div>
-                {error && <div className="text-sm text-red-600 mb-2">{error}</div>}
+    <View style={styles.container}>
+      {!profile?.profileComplete && profile?.role === 'manager' ? (
+        <View style={styles.card}>
+          <Text style={styles.title}>{isEdit ? 'Edit Event' : 'Create Event'}</Text>
+          <Text style={{ marginTop: 8 }}>Please create your society profile before creating events.</Text>
+          <Pressable style={[styles.primary, { marginTop: 12 }]} onPress={() => router.push('/manager/profile')}><Text style={styles.primaryText}>Go to Society Profile</Text></Pressable>
+        </View>
+      ) : (
+        <View style={styles.card}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <Text style={styles.title}>{isEdit ? 'Edit Event' : 'Create Event'}</Text>
+            {isEdit && step === 3 && (
+              <Pressable style={styles.primary} onPress={onSubmit} disabled={loading}><Text style={styles.primaryText}>{loading ? 'Saving...' : 'Save Changes'}</Text></Pressable>
+            )}
+          </View>
+          <View style={styles.rowCenter}>
+            {[1,2,3].map((s) => (
+              <Pressable key={s} style={[styles.step, step===s && styles.stepActive]} onPress={() => setStep(s)}><Text style={[styles.stepText, step===s && styles.stepTextActive]}>Step {s}</Text></Pressable>
+            ))}
+          </View>
+          {!!error && <Text style={styles.error}>{error}</Text>}
 
-                {/* Step 1: Image URL + Preview */}
-                {step === 1 && (
-                  <div className="space-y-4">
-                    {eventImageUrl ? (
-                      <div className="w-full">
-                        <img src={eventImageUrl} alt="Preview" className="w-full max-h-96 object-contain rounded-md border" />
-                      </div>
-                    ) : (
-                      <div className="w-full h-48 flex items-center justify-center text-gray-500 border rounded-md">Image preview</div>
-                    )}
-                    <label className="block">
-                      <span className="text-sm">Event Image URL</span>
-                      <input type="url" className="input mt-1" value={eventImageUrl} onChange={(e) => setEventImageUrl(e.target.value)} placeholder="Paste an image URL" />
-                    </label>
-                    <label className="block">
-                      <span className="text-sm">Or Upload Banner</span>
-                      <input type="file" accept="image/*" className="input mt-1" onChange={(e) => setBannerFile(e.target.files?.[0] || null)} />
-                    </label>
-                    <div className="flex justify-end">
-                      <button className="btn btn-primary" onClick={() => setStep(2)}>Next →</button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Step 2: Basic Event Details */}
-                {step === 2 && (
-                  <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={(e)=>{e.preventDefault(); setStep(3);}}>
-                    <label className="block md:col-span-2">
-                      <span className="text-sm">Event Title</span>
-                      <input className="input mt-1" value={title} onChange={(e) => setTitle(e.target.value)} required />
-                    </label>
-                    <label className="block md:col-span-2">
-                      <span className="text-sm">Description</span>
-                      <textarea className="input mt-1" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
-                    </label>
-                    <label className="block">
-                      <span className="text-sm">Event Category</span>
-                      <select className="input mt-1" value={eventCategory} onChange={(e) => setEventCategory(e.target.value)}>
-                        {['Seminar','Workshop','Sports','Cultural','Academic','Competition'].map((c) => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                    </label>
-                    <label className="block">
-                      <span className="text-sm">Event Type</span>
-                      <select className="input mt-1" value={eventType} onChange={(e) => setEventType(e.target.value)}>
-                        {['Online','Offline','Hybrid'].map((t) => <option key={t} value={t}>{t}</option>)}
-                      </select>
-                    </label>
-                    <label className="block">
-                      <span className="text-sm">Organizer Name</span>
-                      <input className="input mt-1" value={organizerName} onChange={(e) => setOrganizerName(e.target.value)} />
-                    </label>
-                    <label className="block">
-                      <span className="text-sm">Organizer Department</span>
-                      <input className="input mt-1" value={organizerDepartment} onChange={(e) => setOrganizerDepartment(e.target.value)} />
-                    </label>
-                    <div className="md:col-span-2 flex items-center justify-between">
-                      <button type="button" className="btn btn-secondary" onClick={() => setStep(1)}>← Back</button>
-                      <button type="submit" className="btn btn-primary">Next →</button>
-                    </div>
-                  </form>
-                )}
-
-                {/* Step 3: Additional Information */}
-                {step === 3 && (
-                  <form onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <label className="block">
-                      <span className="text-sm">Event Date</span>
-                      <input type="date" className="input mt-1" value={eventDate} onChange={(e) => setEventDate(e.target.value)} />
-                    </label>
-                    <label className="block">
-                      <span className="text-sm">Start Time</span>
-                      <input type="time" className="input mt-1" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-                    </label>
-                    <label className="block">
-                      <span className="text-sm">End Time</span>
-                      <input type="time" className="input mt-1" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
-                    </label>
-                    <label className="block">
-                      <span className="text-sm">Duration (minutes)</span>
-                      <input type="number" className="input mt-1" value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="Auto-calculated if times provided" />
-                    </label>
-
-                    <label className="block">
-                      <span className="text-sm">Venue / Location</span>
-                      <input className="input mt-1" value={venue} onChange={(e) => setVenue(e.target.value)} />
-                    </label>
-                    <label className="block">
-                      <span className="text-sm">Campus (optional)</span>
-                      <select className="input mt-1" value={campus} onChange={(e) => setCampus(e.target.value)}>
-                        <option value="">Select campus</option>
-                        {['Main Campus','Satellite Campus','Online'].map((c) => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                    </label>
-                    <label className="block md:col-span-2">
-                      <span className="text-sm">Location Link (optional)</span>
-                      <input className="input mt-1" value={locationLink} onChange={(e) => setLocationLink(e.target.value)} placeholder="Google Maps or meeting link" />
-                    </label>
-
-                    <label className="block">
-                      <span className="text-sm">Registration Deadline</span>
-                      <input type="date" className="input mt-1" value={registrationDeadline} onChange={(e) => setRegistrationDeadline(e.target.value)} />
-                    </label>
-                    <div className="block">
-                      <span className="text-sm">Registration Options</span>
-                      <div className="mt-2 flex items-center gap-6">
-                        <label className="inline-flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            className="input"
-                            checked={isRegistrationRequired && !isOpenEvent}
-                            onChange={(e) => {
-                              const checked = e.target.checked;
-                              setIsRegistrationRequired(checked);
-                              if (checked) setIsOpenEvent(false);
-                            }}
-                          />
-                          <span>Registration Required</span>
-                        </label>
-                        <label className="inline-flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            className="input"
-                            checked={isOpenEvent}
-                            onChange={(e) => {
-                              const checked = e.target.checked;
-                              setIsOpenEvent(checked);
-                              if (checked) {
-                                setIsRegistrationRequired(false);
-                                setRegistrationFee(0);
-                                setRegistrationLink('');
-                              }
-                            }}
-                          />
-                          <span>Open Event (Free, No Registration)</span>
-                        </label>
-                      </div>
-                    </div>
-                    {isRegistrationRequired && !isOpenEvent && (
-                      <>
-                        <label className="block">
-                          <span className="text-sm">Registration Link</span>
-                          <input className="input mt-1" value={registrationLink} onChange={(e) => setRegistrationLink(e.target.value)} />
-                        </label>
-                        <label className="block">
-                          <span className="text-sm">Registration Fee</span>
-                          <input type="number" className="input mt-1" value={registrationFee} onChange={(e) => setRegistrationFee(e.target.value)} />
-                        </label>
-                      </>
-                    )}
-
-                    <label className="block md:col-span-2">
-                      <span className="text-sm">Brochure or PDF Link (optional)</span>
-                      <input type="url" className="input mt-1" value={brochureLink} onChange={(e) => setBrochureLink(e.target.value)} placeholder="Paste link to brochure or PDF" />
-                    </label>
-
-                    <label className="block md:col-span-2">
-                      <span className="text-sm">Organizer Contact Email</span>
-                      <input type="email" className="input mt-1" value={organizerContact} onChange={(e) => setOrganizerContact(e.target.value)} />
-                    </label>
-
-                    <label className="block">
-                      <span className="text-sm">Visibility</span>
-                      <select className="input mt-1" value={visibility} onChange={(e) => setVisibility(e.target.value)}>
-                        <option value="public">Public</option>
-                        <option value="private">Private</option>
-                      </select>
-                    </label>
-                    <label className="block">
-                      <span className="text-sm">Status</span>
-                      <select className="input mt-1" value={status} onChange={(e) => setStatus(e.target.value)}>
-                        {['Published','Draft','Cancelled'].map((s) => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </label>
-                    <label className="block md:col-span-2">
-                      <span className="text-sm">Tags (comma-separated)</span>
-                      <input className="input mt-1" value={tags} onChange={(e) => setTags(e.target.value)} />
-                    </label>
-
-                    <div className="md:col-span-2 flex items-center justify-between">
-                      <button type="button" className="btn btn-secondary" onClick={() => setStep(2)}>← Back</button>
-                      <button className="btn btn-primary" disabled={loading}>
-                        {isEdit ? (loading ? 'Saving...' : 'Save Changes') : (loading ? 'Publishing...' : 'Confirm / Publish Event')}
-                      </button>
-                    </div>
-                  </form>
-                )}
-              </div>
-            </div>
+          {step === 1 && (
+            <View>
+              {eventImageUrl ? (
+                <Image source={{ uri: eventImageUrl }} style={{ width: '100%', height: 200, borderRadius: 8 }} />
+              ) : (
+                <View style={{ width: '100%', height: 160, borderWidth: 1, borderColor: '#ddd', borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}><Text>Image preview</Text></View>
+              )}
+              <TextInput placeholder="Event Image URL" value={eventImageUrl} onChangeText={setEventImageUrl} style={styles.input} />
+              <View style={{ alignItems: 'flex-end' }}>
+                <Pressable style={styles.primary} onPress={() => setStep(2)}><Text style={styles.primaryText}>Next →</Text></Pressable>
+              </View>
+            </View>
           )}
-    </ManagerLayout>
+
+          {step === 2 && (
+            <View>
+              <TextInput placeholder="Event Title" value={title} onChangeText={setTitle} style={styles.input} />
+              <TextInput placeholder="Description" multiline value={description} onChangeText={setDescription} style={[styles.input, { height: 100 }]} />
+              <TextInput placeholder="Event Category" value={eventCategory} onChangeText={setEventCategory} style={styles.input} />
+              <TextInput placeholder="Event Type (Online/Offline/Hybrid)" value={eventType} onChangeText={setEventType} style={styles.input} />
+              <TextInput placeholder="Organizer Name" value={organizerName} onChangeText={setOrganizerName} style={styles.input} />
+              <TextInput placeholder="Organizer Department" value={organizerDepartment} onChangeText={setOrganizerDepartment} style={styles.input} />
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+                <Pressable style={styles.secondary} onPress={() => setStep(1)}><Text>← Back</Text></Pressable>
+                <Pressable style={styles.primary} onPress={() => setStep(3)}><Text style={styles.primaryText}>Next →</Text></Pressable>
+              </View>
+            </View>
+          )}
+
+          {step === 3 && (
+            <View>
+              <TextInput placeholder="Event Date (YYYY-MM-DD)" value={eventDate} onChangeText={setEventDate} style={styles.input} />
+              <TextInput placeholder="Start Time (HH:mm)" value={startTime} onChangeText={setStartTime} style={styles.input} />
+              <TextInput placeholder="End Time (HH:mm)" value={endTime} onChangeText={setEndTime} style={styles.input} />
+              <TextInput placeholder="Duration (minutes)" value={duration} onChangeText={setDuration} style={styles.input} />
+              <TextInput placeholder="Venue / Location" value={venue} onChangeText={setVenue} style={styles.input} />
+              <TextInput placeholder="Campus (optional)" value={campus} onChangeText={setCampus} style={styles.input} />
+              <TextInput placeholder="Location Link (optional)" value={locationLink} onChangeText={setLocationLink} style={styles.input} />
+              <TextInput placeholder="Registration Deadline (YYYY-MM-DD)" value={registrationDeadline} onChangeText={setRegistrationDeadline} style={styles.input} />
+              <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', marginTop: 8 }}>
+                <Pressable style={[styles.radio, isRegistrationRequired && !isOpenEvent && styles.radioActive]} onPress={() => { setIsRegistrationRequired(true); setIsOpenEvent(false); }}><Text>Registration Required</Text></Pressable>
+                <Pressable style={[styles.radio, isOpenEvent && styles.radioActive]} onPress={() => { setIsOpenEvent(true); setIsRegistrationRequired(false); setRegistrationFee(0); setRegistrationLink(''); }}><Text>Open Event</Text></Pressable>
+              </View>
+              {isRegistrationRequired && !isOpenEvent && (
+                <View>
+                  <TextInput placeholder="Registration Link" value={registrationLink} onChangeText={setRegistrationLink} style={styles.input} />
+                  <TextInput placeholder="Registration Fee" value={String(registrationFee)} onChangeText={setRegistrationFee} style={styles.input} />
+                </View>
+              )}
+              <TextInput placeholder="Brochure or PDF Link (optional)" value={brochureLink} onChangeText={setBrochureLink} style={styles.input} />
+              <TextInput placeholder="Organizer Contact Email" value={organizerContact} onChangeText={setOrganizerContact} style={styles.input} />
+              <TextInput placeholder="Visibility (public/private)" value={visibility} onChangeText={setVisibility} style={styles.input} />
+              <TextInput placeholder="Status" value={status} onChangeText={setStatus} style={styles.input} />
+              <TextInput placeholder="Tags (comma-separated)" value={tags} onChangeText={setTags} style={styles.input} />
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+                <Pressable style={styles.secondary} onPress={() => setStep(2)}><Text>← Back</Text></Pressable>
+                <Pressable style={styles.primary} disabled={loading} onPress={onSubmit}><Text style={styles.primaryText}>{isEdit ? (loading ? 'Saving...' : 'Save Changes') : (loading ? 'Publishing...' : 'Confirm / Publish Event')}</Text></Pressable>
+              </View>
+            </View>
+          )}
+        </View>
+      )}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 16 },
+  card: { borderWidth: 1, borderColor: '#eee', borderRadius: 12, padding: 12, backgroundColor: '#fff' },
+  title: { fontSize: 20, fontWeight: '600', color: '#0a7' },
+  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16, marginTop: 8 },
+  primary: { backgroundColor: '#111', paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8 },
+  primaryText: { color: '#fff', fontWeight: '600' },
+  secondary: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12 },
+  rowCenter: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginVertical: 8 },
+  step: { borderWidth: 1, borderColor: '#ddd', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
+  stepActive: { backgroundColor: '#0a7', borderColor: '#0a7' },
+  stepText: { color: '#222' },
+  stepTextActive: { color: '#fff' },
+  radio: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
+  radioActive: { backgroundColor: '#e5e7eb' }
+});

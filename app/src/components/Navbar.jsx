@@ -1,58 +1,46 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
 import { useState } from 'react';
-import { Bell, Bookmark, User, Search } from 'lucide-react';
+import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export default function Navbar({ onSearch }) {
   const { profile, logout } = useAuth();
   const [query, setQuery] = useState('');
-  const navigate = useNavigate();
+  const router = useRouter();
   const [showNotif, setShowNotif] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleLogout = async () => {
-    await logout();
-    navigate('/login');
+    setShowLogoutConfirm(true);
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 w-full border-b border-gray-200 bg-white">
-      <div className="mx-auto max-w-6xl px-4 h-14 flex items-center gap-4">
-        <Link to="/" className="text-fjwuGreen font-semibold">FJWU Event Hub</Link>
-        <div className="flex-1">
-          <input
-            className="input"
-            placeholder="Search events..."
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              onSearch?.(e.target.value);
-            }}
-          />
-        </div>
-        <div className="flex items-center gap-3 relative">
-          <button className="btn btn-secondary" title="Search" onClick={() => navigate('/student/search')}>
-            <Search className="w-4 h-4" />
-          </button>
-          <button className="btn btn-secondary" title="Notifications" onClick={() => setShowNotif((s) => !s)}>
-            <Bell className="w-4 h-4" />
-          </button>
-          {showNotif && (
-            <div className="absolute right-0 top-12 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-10">
-              <div className="p-3 text-sm text-gray-700">No notifications yet.</div>
-            </div>
-          )}
-          <button className="btn btn-secondary" title="Bookmarks" onClick={() => navigate(profile?.role === 'manager' ? '/manager/favourites' : '/student/favourites')}>
-            <Bookmark className="w-4 h-4" />
-          </button>
-          {profile?.role === 'manager' && (
-            <button className="btn btn-primary" title="Create Event" onClick={() => navigate('/manager/create-event')}>＋</button>
-          )}
-          <button className="btn btn-secondary" title="Profile" onClick={() => navigate(profile?.role === 'manager' ? '/manager/profile' : '/student/profile')}>
-            <User className="w-4 h-4" />
-          </button>
-          <button className="btn btn-secondary" onClick={handleLogout}>Logout</button>
-        </div>
-      </div>
-    </nav>
+    <View style={styles.nav}>
+      <Text style={styles.brand}>FJWU Event Hub</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Search events..."
+        value={query}
+        onChangeText={(t) => { setQuery(t); onSearch?.(t); }}
+      />
+      <View style={styles.actions}>
+        <Pressable style={styles.btn} onPress={() => router.push('/student/search')}><Text>Search</Text></Pressable>
+        <Pressable style={styles.btn} onPress={() => setShowNotif((s) => !s)}><Text>Notif</Text></Pressable>
+        <Pressable style={styles.btn} onPress={() => router.push(profile?.role === 'manager' ? '/manager/favourites' : '/student/favourites')}><Text>Bookmarks</Text></Pressable>
+        {profile?.role === 'manager' && (
+          <Pressable style={styles.btn} onPress={() => router.push('/manager/create-event')}><Text>＋</Text></Pressable>
+        )}
+        <Pressable style={styles.btn} onPress={() => router.push(profile?.role === 'manager' ? '/manager/profile' : '/student/profile')}><Text>Profile</Text></Pressable>
+        <Pressable style={styles.btn} onPress={handleLogout}><Text>Logout</Text></Pressable>
+      </View>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  nav: { paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderColor: '#eee', backgroundColor: '#fff' },
+  brand: { fontWeight: '600', color: '#0a7', marginBottom: 8 },
+  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 16 },
+  actions: { flexDirection: 'row', gap: 8, marginTop: 8 },
+  btn: { borderWidth: 1, borderColor: '#ddd', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }
+});

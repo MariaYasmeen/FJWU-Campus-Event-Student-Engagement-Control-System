@@ -1,14 +1,16 @@
+import { View, StyleSheet } from 'react-native';
 import Navbar from './Navbar.jsx';
-import LeftSidebar from './LeftSidebar.jsx';
-import AnnouncementsPanel from './AnnouncementsPanel.jsx';
 
 export default function AdminLayout({ children }) {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <View style={styles.container}>
       <Navbar />
-      <LeftSidebar role="manager" />
-      <AnnouncementsPanel />
-      <main className="pt-14 pl-64 pr-80 h-screen overflow-y-auto p-6">{children}</main>
-    </div>
+      <View style={styles.main}>{children}</View>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  main: { flex: 1, padding: 16 }
+});
